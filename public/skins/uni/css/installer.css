@@ -1,0 +1,84 @@
+@font-face {
+    font-family: 'QuaverSans';
+    src: url('../fonts/QuaverSans.otf') format('opentype');
+}
+
+*{
+	margin: 0;
+	padding: 0;
+	font-family: Helvetica, arial, freesans, clean, sans-serif;
+	font-size: 20px;
+}
+
+section{
+	width: 650px;
+	margin: auto;
+	padding-bottom: 50px;
+}
+
+
+img{
+	display: block;
+	margin: auto;
+	margin-top: 80px;
+	margin-bottom: 40px;
+}
+
+
+h3{
+	font-weight: normal;
+	font-size: 25px;
+	text-align: center;
+}
+
+h2{
+	text-align: left;
+	font-weight: normal;
+	margin-top: 30px;
+	margin-bottom: 20px;
+	font-size: 30px;
+	border-bottom: 1px solid black;
+	width: 100%
+}
+
+p{
+	padding-left: 13px;
+}
+
+input{
+	display: block;
+	border: 2px solid black;
+	margin: auto;
+	margin-top: 15px;
+	width: 450px;
+	font-size: 25px;
+	text-align: center;
+	outline: none;
+}
+
+input:focus{
+	box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+button{
+	padding: 10px;
+	padding-left: 15px;
+	padding-right: 15px;
+	background-color: black;
+	border : 2px solid black;
+	margin: auto;
+	margin-top: 30px;
+	display: block;
+	color: white;
+	cursor: pointer;
+}
+
+button:hover{
+	text-shadow: 0 0 10px white;
+}
+
+button:active{
+	background-color: white;
+	color: black;
+}
+

@@ -35,7 +35,7 @@ function onRequest(req, res){
 			request[1] = "skins/" + config.skin;
 		case "js":
 		case "img":
-			sendFile(request.join('/'));
+			sendFile(request.join('/'), res);
 			break;
 		case "favicon.ico":
 			// directly end a favicon request
@@ -53,6 +53,7 @@ function onRequest(req, res){
 }
 
 function sendFile(path, res){
+	console.log(path);
 	fs.readFile("public" + path, function(err, data){
 		if(err){
 			// in case of error send 404
