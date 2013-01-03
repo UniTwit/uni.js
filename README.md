@@ -34,7 +34,7 @@ Install Redis :
 
 And run it in screen :
 
-	screen -d -m [src/redis-cli]
+	screen -d -m src/redis-server
 
 Install needed modules : 
 
