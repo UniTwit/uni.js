@@ -9,5 +9,8 @@
 		"consumer_secret" : null
 	},
 
-	"port" : 80
+	"http_port" : 80,
+	"io_port" : 81,
+
+	"skin": "uni"
 }
