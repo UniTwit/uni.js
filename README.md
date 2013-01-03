@@ -41,6 +41,6 @@ Install needed modules :
 	cd ../uni.js/
 	npm install twit
 
-And finally run it : 
+And finally run uni : 
 
 	node uni.js
