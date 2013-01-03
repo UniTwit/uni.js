@@ -1,0 +1,13 @@
+{
+	"redis" : {
+		"host": "localhost",
+		"port": 6379
+	},
+
+	"twitter" :{
+		"consumer_key" : null,
+		"consumer_secret" : null
+	},
+
+	"port" : 80
+}
