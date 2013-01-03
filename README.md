@@ -40,6 +40,7 @@ Install needed modules :
 
 	cd ../uni.js/
 	npm install twit
+	npm install socket.io
 
 And finally run uni : 
 
