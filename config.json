@@ -10,7 +10,6 @@
 	},
 
 	"http_port" : 80,
-	"io_port" : 81,
 
 	"skin": "uni"
 }
