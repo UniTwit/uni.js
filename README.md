@@ -1,4 +1,6 @@
-![logo](http://files.lechatleon.com/i/UNI.png~508)
+<p align="center">
+  <img src="http://files.lechatleon.com/i/UNI.png~255" alt="UNI logo"/>
+</p>
 
 uni.js
 ======
