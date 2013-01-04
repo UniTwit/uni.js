@@ -6,7 +6,7 @@ A unified interface to manage multiple Twitter accounts in team.
 Powered by node.js & Redis
 
 <p align="center">
-  <img src="http://files.lechatleon.com/i/UNI.png~255" alt="UNI logo"/>
+  <img src="https://raw.github.com/UniTwit/uni.js/master/public/img/uni_487x230.png" alt="UNI logo"/>
 </p>
 
 ## Setup
@@ -40,6 +40,7 @@ Install needed modules :
 
 	cd ../uni.js/
 	npm install twit
+	npm install hiredis redis
 	npm install socket.io
 
 And finally run uni : 
