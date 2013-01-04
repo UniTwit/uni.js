@@ -1,0 +1,18 @@
+{
+
+	"twitter" : {
+		"consumer_key": {
+			"regex" : "^[0-9a-zA-Z]{21}$"
+		},
+		"consumer_secret":{
+			"regex" : "^[0-9a-zA-Z]{41}$"
+		}
+	},
+
+	"port" : {
+		"dataType":"int",
+		"min":10,
+		"max":65535
+	}
+
+}

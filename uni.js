@@ -13,15 +13,28 @@ reset = '\033[0m';
 
 console.log(red + "UNI" + green + "\nv0.1");
 
-// modules
+
+
+// modules / config / static data
 var fs = require('fs');
 var Twit = require('twit');
 var http = require('http');
-
-// config file
 var config = require('./config');
-// mime-type
-var mimetypes  = require('./mime-type')
+var redis = require('redis');
+var mimetypes  = require('./mime-type');
+var	dataSchem  = require('./dataSchem');
+
+// PROTOTYPES
+
+Object.prototype.clone = function() {
+  var newObj = (this instanceof Array) ? [] : {};
+  for (i in this) {
+    if (i == 'clone') continue;
+    if (this[i] && typeof this[i] == "object") {
+      newObj[i] = this[i].clone();
+    } else newObj[i] = this[i]
+  } return newObj;
+};
 
 // start http/io server
 http_server = http.createServer(onRequest)
@@ -29,12 +42,15 @@ var io = require('socket.io').listen(http_server);
 http_server.listen(config.http_port);
 console.log("HTTP server "+ green + "started" + reset + " at port " + blue + config.http_port + reset);
 
+
+
 // determine if UNI is correctly installed
 var installed = config.twitter.consumer_key !== null && config.twitter.consumer_key !== null;
 if(installed)
 	console.log('Installed: '+blue+"yes"+reset);
 else
 	console.log('Installed: '+red+"no"+reset);
+
 
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 //					HTTP SERVER
@@ -70,7 +86,15 @@ function onRequest(req, res){
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 //					SOCKET.io
 
-// TODO
+io.set('log level', 1);
+
+io.sockets.on('connection', function (socket) {
+
+  	socket.on('dataValidation', function (data) {
+    		socket.emit("dataValidation", {"valid":isValid(data.data, data.keys), "keys":data.keys})
+  	});
+
+});
 
 
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
@@ -96,3 +120,42 @@ function sendFile(path, res){
 	});
 }
 
+function isValid(data, keys){
+	schem = dataSchem.clone();
+	for (i in keys) 
+		if(schem.hasOwnProperty(keys[i]))
+			schem = schem[keys[i]];	
+
+
+	valid = true;
+
+	if(schem.regex != undefined){
+		regex = new RegExp(schem.regex);
+		valid = valid && regex.test(data);
+	}
+
+	if(schem.dataType != undefined){
+		switch(schem.dataType){
+			case "int":
+				if(!isNaN(parseInt(data))){
+					if (schem.max != undefined)
+						valid = valid && data <= schem.max;
+					if (schem.min != undefined)
+						valid = valid && data >= schem.min;
+				}else{
+					valid = false;
+				}
+			break;
+			case "string":
+				if(schem.max != undefined)
+					valid = valid && data.toString.length <= max;
+				if(schem.min != undefined)
+					valid = valid && data.toString.length >= min;
+			break;
+
+		}
+	}
+
+	return valid;
+
+}
