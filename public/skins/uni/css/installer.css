@@ -2,7 +2,8 @@
 	margin: 0;
 	padding: 0;
 	font-family: 'Open Sans',Helvetica,Arial,sans-serif;
-	font-size: 15px; 
+	font-size: 15px;
+	outline: none; 
 }
 
 section{
@@ -40,6 +41,8 @@ p{
 	padding-left: 15px;
 }
 
+/* FORMS */
+
 input{
 	display: block;
 	border: 2px solid black;
@@ -48,11 +51,18 @@ input{
 	width: 550px;
 	font-size: 25px;
 	text-align: center;
-	outline: none;
 }
 
 input:focus{
 	box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+input.valid{
+	border: 2px solid green;
+}
+
+input.invalid{
+	border: 2px solid red;
 }
 
 button{

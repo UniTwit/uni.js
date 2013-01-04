@@ -11,16 +11,16 @@ blue  = '\033[34m';
 green  = '\033[32m';
 reset = '\033[0m';
 
-console.log(red + "UNI" + green + "\nv0.1");
+console.log(red + "UNI" + green + "\nv0.1.0004");
 
 
 
 // modules / config / static data
 var fs = require('fs');
-var Twit = require('twit');
 var http = require('http');
-var config = require('./config');
 var redis = require('redis');
+
+var config = require('./config');
 var mimetypes  = require('./mime-type');
 var	dataSchem  = require('./dataSchem');
 
@@ -45,11 +45,11 @@ console.log("HTTP server "+ green + "started" + reset + " at port " + blue + con
 
 
 // determine if UNI is correctly installed
-var installed = config.twitter.consumer_key !== null && config.twitter.consumer_key !== null;
+var installed = config.twitter.consumer_key !== null && config.twitter.consumer_secret !== null;
 if(installed)
-	console.log('Installed: '+blue+"yes"+reset);
+	console.log('INSTALL '+ green + "OK" + reset);
 else
-	console.log('Installed: '+red+"no"+reset);
+	console.log('INSTALL '+ red + "BAD" + reset);
 
 
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
@@ -90,8 +90,148 @@ io.set('log level', 1);
 
 io.sockets.on('connection', function (socket) {
 
-  	socket.on('dataValidation', function (data) {
-    		socket.emit("dataValidation", {"valid":isValid(data.data, data.keys), "keys":data.keys})
+  	socket.on('dataValidation', function (request) {
+    	socket.emit("dataValidation", {
+    		"id" : request.id,
+    		"data" : {
+    			"valid" : isValid(request.data.value, request.data.keys)
+    		}
+    	});
+  	});
+
+  	socket.on('getConfig', function (request) {
+  		if(!installed){
+    		socket.emit("getConfig", {
+    			"id" : request.id,
+    			"data" : {
+    				"key" : config.twitter.consumer_key,
+    				"secret" : config.twitter.consumer_secret,
+    				"host" : config.redis.host,
+    				"port" : config.redis.port
+    			}
+    		});
+    	}else{
+    		socket.emit("getConfig", {
+    			"id" : request.id,
+    			"err": {"id": 100, "text": "Already installed"}
+    		});
+    	}
+  	});
+
+  	socket.on('setConfig', function (request){
+  		if(!installed){
+
+  			var validationErrors = {};
+  			var valid = true;
+
+  			if(request.data.key != undefined){
+  				if(!isValid(request.data.key, ['twitter','consumer_key'])){
+  					validationErrors["key"] = "consumer_key has an invalid format.";
+  					valid = false;	
+  				}
+  			}else{
+  				validationErrors["key"] = "consumer_key not provided";
+  				valid = false;
+  			}
+
+  			if(request.data.secret != undefined){
+  				if(!isValid(request.data.secret, ['twitter','consumer_secret'])){
+  					validationErrors["secret"] = "consumer_secret has an invalid format.";
+  					valid = false;	
+  				}
+  			}else{
+  				validationErrors["secret"] = "consumer_secret not provided";
+  				valid = false;
+  			}
+
+  			if(request.data.access != undefined){
+  				if(!isValid(request.data.access, ['twitter','access_token'])){
+  					validationErrors["access"] = "access_token has an invalid format.";
+  					valid = false;	
+  				}
+  			}else{
+  				validationErrors["access"] = "access_token not provided";
+  				valid = false;
+  			}
+
+  			if(request.data.s_access != undefined){
+  				if(!isValid(request.data.s_access, ['twitter','access_token_secret'])){
+  					validationErrors["s_access"] = "access_token_secret has an invalid format.";
+  					valid = false;	
+  				}
+  			}else{
+  				validationErrors["s_access"] = "access_token_secret not provided";
+  				valid = false;
+  			}
+
+  			if(request.data.port != undefined){
+  				if(!isValid(request.data.port, ['port'])){
+  					validationErrors["port"] = "port has an invalid format.";
+  					valid = false;	
+  				}
+  			}else{
+  				validationErrors["port"] = "port not provided";
+  				valid = false;
+  			}
+
+  			if(request.data.host == ""){
+  				validationErrors["host"] = "host not provided";
+  				valid = false;
+  			}
+
+  			if(request.data.pass == ""){
+  				validationErrors["pass"] = "pass not provided";
+  				valid = false;
+  			}
+
+  			if(!valid){
+  				socket.emit("setConfig", {
+  					"id": request.id,
+  					"data": {
+  						"valid" : false,
+  						"validationErrors" : validationErrors
+  					}
+  				});
+  			}else{
+  				testRedisConnexion(request.data.host, request.data.port, request.data.pass, function (redisSuccess) {
+  					if(!redisSuccess){
+  						validationErrors['redis'] = "Unable to connect to Redis.";
+  						valid = false;
+  					}
+
+  				testTwitterConnexion(request.data.key, request.data.secret, request.data.access, request.data.s_access, function (twitterSuccess){
+  					if(!redisSuccess){
+  						validationErrors['redis'] = "Unable to connect to twitter.";
+  						valid = false;
+  					}
+
+  				if(valid){
+  					socket.emit("setConfig", {
+  						"id": request.id,
+  						"data": {
+  							"valid" : true
+  						}
+  					});
+  				}else{
+  					socket.emit("setConfig", {
+  						"id": request.id,
+  						"data": {
+  							"valid" : false,
+  							"validationErrors" : validationErrors
+  						}
+  					});
+  				}
+
+  				});
+  				});
+  			}
+
+  		}else{
+  			socket.emit("setConfig", {
+    			"id" : request.id,
+    			"err": {"id": 100, "text": "Already installed"}
+    		});	
+  		}
   	});
 
 });
@@ -99,6 +239,37 @@ io.sockets.on('connection', function (socket) {
 
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 //						UTILS
+
+function testTwitterConnexion(key, secret, access, s_access, callback){
+
+	console.log(">"+key+"<");
+	console.log(">"+secret+"<");
+	console.log(">"+access+"<");
+	console.log(">"+s_access+"<");
+
+	var keys = {
+		"consumer_key" : "iFjgWxhpthgsTnJ7IzMXg",
+		"consumer_secret" : "c1shFHN0KXOBZPJhRBd8Rjo7wk2BQnrnyWwNa1Ad5ag",
+		"access_token_key" : "86149580-ncV6DFwy3QnkQFfJlavBVLgliW7iz2nFVyLyjTkx8",
+		"access_token_secret" : "oHn3oQlXKi0SlXXkPEsAbilqIH1qB7KgnOxH5V00"
+	};
+}
+
+function testRedisConnexion(host, port, pass, callback){
+
+	client = redis.createClient(port, host);
+	client.auth(pass);
+
+	client.on('ready', function(){
+		console.log("REDIS "+ green + "OK"+ reset);
+		callback(true);
+	});
+	client.on('error', function(){
+		console.log("REDIS "+ red + "BAD"+ reset);
+		callback(false);
+	});
+
+}
 
 function sendFile(path, res){
 	fs.readFile("public" + path, function(err, data){

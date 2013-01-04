@@ -2,10 +2,16 @@
 
 	"twitter" : {
 		"consumer_key": {
-			"regex" : "^[0-9a-zA-Z]{21}$"
+			"regex" : "^[0-9a-zA-Z]{18,25}$"
 		},
 		"consumer_secret":{
-			"regex" : "^[0-9a-zA-Z]{41}$"
+			"regex" : "^[0-9a-zA-Z]{38,45}$"
+		},
+		"access_token": {
+			"regex" : "^[0-9]{8}-[0-9a-zA-Z]{38,45}$"
+		},
+		"access_token_secret":{
+			"regex" : "^[0-9a-zA-Z]{38,45}$"
 		}
 	},
 
