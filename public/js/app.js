@@ -1,19 +1,24 @@
-var socket = io.connect('http://ks.multoo.eu:1337');
+var socket = io.connect();
 var callbacks = {};
 
 socket.on('connect', function () {
       console.log('Connected !');
 });
 
+socket.on('openTwitterAuthPage', function (data) {
+	console.log('TWUT !\t\t\t'+ data.request_token);
+	var tab = window.open("https://twitter.com/oauth/authenticate?oauth_token=" + data.request_token, '_newtab');
+});
+
 
 window.onload = function(){
 	document.getElementById('key').addEventListener('blur', validate);
 	document.getElementById('secret').addEventListener('blur', validate);
-	document.getElementById('access').addEventListener('blur', validate);
-	document.getElementById('s_access').addEventListener('blur', validate);
 	document.getElementById('port').addEventListener('blur', validate);
 
 	document.getElementById('doneButton').addEventListener('click', setConfig);
+
+	document.getElementById('callback').innerHTML = window.location.origin + "/twitter";
 
 	sendRequest('getConfig',{},function(response){
 		for(key in response)
@@ -32,12 +37,6 @@ function validate(e){
 		break;
 		case "secret":
 			keys = ['twitter','consumer_secret'];
-		break;
-		case "access":
-			keys = ['twitter', 'access_token'];
-		break;
-		case "s_access":
-			keys = ['twitter','access_token_secret'];
 		break;
 		case "port":
 			keys = ['port'];
@@ -59,6 +58,7 @@ function validate(e){
 function setConfig(){
 
 	config = {};
+	config.callback_url = window.location.origin + "/twitter";
 	inputs = document.getElementsByTagName('input');
 
 	for(i in inputs)

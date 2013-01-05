@@ -41,6 +41,28 @@ p{
 	padding-left: 15px;
 }
 
+#callback{
+	font-family: monospace;
+	font-size: 12px;
+}
+
+/* POPUPS */
+
+#overlay{
+	display: none;
+	position: fixed;
+	background-color: rgba(0,0,0,0.5);
+	z-index: 99;
+}
+
+.block{
+	display: block;
+}
+
+.popup{
+	z-index: 100;
+}
+
 /* FORMS */
 
 input{
@@ -86,4 +108,6 @@ button:active{
 	background-color: white;
 	color: black;
 }
+
+
 
