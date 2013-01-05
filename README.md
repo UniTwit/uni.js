@@ -41,7 +41,7 @@ Install needed modules :
 	cd ../uni.js/
 	npm install twit node-twitter-api
 	npm install redis
-	npm install socket.io
+	npm install socket.io -g
 
 And finally run uni : 
 
