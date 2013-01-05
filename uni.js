@@ -20,18 +20,20 @@ var fs = require('fs');
 var http = require('http');
 var redis = require('redis');
 
+var twitterAPI = require('node-twitter-api');
+
 var config = require('./config');
 var mimetypes  = require('./mime-type');
 var	dataSchem  = require('./dataSchem');
 
 // PROTOTYPES
 
-Object.prototype.clone = function() {
+Object.prototype.cloneObject = function() {
   var newObj = (this instanceof Array) ? [] : {};
   for (i in this) {
-    if (i == 'clone') continue;
+    if (i == 'cloneObject') continue;
     if (this[i] && typeof this[i] == "object") {
-      newObj[i] = this[i].clone();
+      newObj[i] = this[i].cloneObject();
     } else newObj[i] = this[i]
   } return newObj;
 };
@@ -247,12 +249,22 @@ function testTwitterConnexion(key, secret, access, s_access, callback){
 	console.log(">"+access+"<");
 	console.log(">"+s_access+"<");
 
-	var keys = {
-		"consumer_key" : "iFjgWxhpthgsTnJ7IzMXg",
-		"consumer_secret" : "c1shFHN0KXOBZPJhRBd8Rjo7wk2BQnrnyWwNa1Ad5ag",
-		"access_token_key" : "86149580-ncV6DFwy3QnkQFfJlavBVLgliW7iz2nFVyLyjTkx8",
-		"access_token_secret" : "oHn3oQlXKi0SlXXkPEsAbilqIH1qB7KgnOxH5V00"
-	};
+  var twitter = new twitterAPI({
+    "consumerKey": key,
+    "consumerSecret": secret,
+    "callback": 'http://ks.multoo.eu/'
+  });
+
+
+  twitter.getRequestToken(function(error, requestToken, requestTokenSecret, results){
+    if (error) {
+      console.log("Error getting OAuth request token : " + error);
+    } else {
+        console.log(requestToken, requestTokenSecret, results);
+        console.log("https://twitter.com/oauth/authenticate?oauth_token="+requestToken);
+      }
+    });
+
 }
 
 function testRedisConnexion(host, port, pass, callback){
@@ -292,7 +304,7 @@ function sendFile(path, res){
 }
 
 function isValid(data, keys){
-	schem = dataSchem.clone();
+	schem = dataSchem.cloneObject();
 	for (i in keys) 
 		if(schem.hasOwnProperty(keys[i]))
 			schem = schem[keys[i]];	
