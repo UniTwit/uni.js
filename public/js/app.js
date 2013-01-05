@@ -1,5 +1,9 @@
 var socket = io.connect();
 var callbacks = {};
+var popups = {};
+
+var overlay;
+var doneButton;
 
 socket.on('connect', function () {
       console.log('Connected !');
@@ -7,7 +11,12 @@ socket.on('connect', function () {
 
 socket.on('openTwitterAuthPage', function (data) {
 	console.log('TWUT !\t\t\t'+ data.request_token);
-	var tab = window.open("https://twitter.com/oauth/authenticate?oauth_token=" + data.request_token, '_newtab');
+	overlay.classList.add('block');
+	popups['twitterAuthPage'] = window.open("https://twitter.com/oauth/authenticate?oauth_token=" + data.request_token, '_newtab');
+});
+
+socket.on('closeTwitterAuthPage', function (data) {
+	popups['twitterAuthPage'].close();
 });
 
 
@@ -16,9 +25,12 @@ window.onload = function(){
 	document.getElementById('secret').addEventListener('blur', validate);
 	document.getElementById('port').addEventListener('blur', validate);
 
-	document.getElementById('doneButton').addEventListener('click', setConfig);
+	doneButton = document.getElementById('doneButton')
+	doneButton.addEventListener('click', setConfig);
 
 	document.getElementById('callback').innerHTML = window.location.origin + "/twitter";
+	
+	overlay = document.getElementById('overlay');
 
 	sendRequest('getConfig',{},function(response){
 		for(key in response)
@@ -57,6 +69,8 @@ function validate(e){
 
 function setConfig(){
 
+	doneButton.removeEventListener('click', setConfig);
+	doneButton.classList.add('disabled');
 	config = {};
 	config.callback_url = window.location.origin + "/twitter";
 	inputs = document.getElementsByTagName('input');
@@ -66,9 +80,12 @@ function setConfig(){
 
 
 	sendRequest('setConfig', config, function(response){
+		overlay.classList.remove('block');
+		doneButton.classList.remove('disabled');
 		if(!response.valid){
 			console.log('INVALID !');
-			console.log(response.validationErrors)
+			console.log(response.validationErrors);
+			doneButton.removeEventListener('click', setConfig);
 		}else{
 			console.log('VALID !');
 		}

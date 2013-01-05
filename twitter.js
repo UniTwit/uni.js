@@ -2,9 +2,10 @@
 
 var module = require('node-twitter-api');
 var api;
-var callbacks = {}
+var callbacks = {};
 
-var tokens = {}
+var tokens = {};
+var timeout = 30000;
 
 exports.test = function (consumer_key, consumer_secret, callback_url, socket, callback){
 
@@ -22,13 +23,20 @@ exports.test = function (consumer_key, consumer_secret, callback_url, socket, ca
 			callback(false);
 		} else {
 			socket.emit('openTwitterAuthPage', {"request_token" : request_token});
-			callbacks['authPage'] = callback;
+			callbacks['receiveTokens'] = callback;
+			setTimeout(function(){
+				console.log('Twitter time out');
+				if(callbacks['receiveTokens'] != null){
+					callbacks['receiveTokens'](false);
+					socket.emit('closeTwitterAuthPage', {});	
+				}
+			}, timeout);
 		}
 	});
 }
 
 exports.receiveTokens = function(req){
-	//console.log(req);
-	callbacks['authPage'](true);
-	callbacks['authPage'] = null;
+	console.log(req);
+	callbacks['receiveTokens'](true);
+	callbacks['receiveTokens'] = null;
 }

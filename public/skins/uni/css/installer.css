@@ -53,9 +53,13 @@ p{
 	position: fixed;
 	background-color: rgba(0,0,0,0.5);
 	z-index: 99;
+	width: 100%;
+	height: 100%;
+	top:0;
+	left: 0;
 }
 
-.block{
+#overlay.block{
 	display: block;
 }
 
@@ -108,6 +112,15 @@ button:active{
 	background-color: white;
 	color: black;
 }
+
+button.disabled:hover,button.disabled:active,button.disabled{
+	background-color: #555;
+	color: #aaa;
+	cursor: default;
+	text-shadow: none;
+}
+
+
 
 
 
