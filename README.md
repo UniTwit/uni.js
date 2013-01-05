@@ -39,8 +39,8 @@ And run it in screen :
 Install needed modules : 
 
 	cd ../uni.js/
-	npm install twit
-	npm install hiredis redis
+	npm install twit node-twitter-api
+	npm install redis
 	npm install socket.io
 
 And finally run uni : 
