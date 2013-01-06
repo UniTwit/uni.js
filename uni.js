@@ -5,14 +5,14 @@ App entry point.
 
 */
 
-var red, blue, white;
 red   = '\033[31m';
 blue  = '\033[34m';
 green  = '\033[32m';
 white = '\033[0m';
 orange = '\033[33m';
 
-console.log(blue + "UNI\t" + white + "v0.1.5");
+console.log(blue + "UNI\t" + white + "v0.1.6");
+console.log("");
 
 // modules / config / static data
 var fs = require('fs');
@@ -31,11 +31,13 @@ installer.test(config, twitter, redis, accounts, init);
 
 function init(twitterOK, redisOK, accountIsPresent){
 
-	if(redisOK && twitterOK && accountIsPresent){
-		console.log('INSTALL\t' + green + "OK" + white); 
-	}else{
-		console.log('INSTALL\t' + orange + "PARTIAL" + white);
-	}
+	if(!twitterOK)
+		console.log('TWITTER\t' + orange + "missing" + white); 
+	if(!redisOK)
+		console.log('REDIS\t' + orange + "missing" + white); 
+	if(!accountIsPresent)
+		console.log('ACCOUNT\t' + orange + "missing" + white);
+
 
 	// start http/io server
 	http_server = http.createServer(onHTTPRequest);
@@ -45,6 +47,8 @@ function init(twitterOK, redisOK, accountIsPresent){
 	io.set('log level', 1);
 	io.sockets.on('connection', onSocketClient);
 
+	if(!(redisOK && twitterOK && accountIsPresent))
+		console.log('Great ! UNI is running :)\nBut it is not fully configured ! Go to the web interface ;D');  
 }
 
 
@@ -121,7 +125,7 @@ function onSocketClient(socket) {
 		if(installer.isReady().twitter){
 			socket.emit("setTwitterConfig", {
 				"id" : request.id,
-				"err": {"id": 100, "text": "Already installed"}
+				"err": {"id": 101, "text": "Twitter is already configured."}
 			});
 		}else{
 			installer.setTwitterConfig(request.data, twitter, config, function(valid, errors){
@@ -140,11 +144,35 @@ function onSocketClient(socket) {
 		if(installer.isReady().redis){
 			socket.emit("setRedisConfig", {
 				"id" : request.id,
-				"err": {"id": 100, "text": "Already installed"}
+				"err": {"id": 102, "text": "Redis is already configured."}
 			});
 		}else{
-			installer.setRedisConfig(request.data, redis, config, function(valid, errors){
+			installer.setRedisConfig(request.data, redis, accounts, config, function(valid, errors){
 				socket.emit('setRedisConfig', {
+					"id": request.id,
+					"data": {
+						"valid" : valid,
+						"validationErrors" : errors
+					}
+				});
+			});
+		}	
+	});
+
+	socket.on('createFirstAccount', function(request){
+		if(installer.isReady().account){
+			socket.emit("createFirstAccount", {
+				"id" : request.id,
+				"err": {"id": 103, "text": "First account already created."}
+			});
+		}else if(!installer.isReady().redis){
+			socket.emit("createFirstAccount", {
+				"id" : request.id,
+				"err": {"id": 104, "text": "You must configure Redis before create the first account."}
+			});
+		}else{
+			installer.createFirstAccount(request.data, accounts, config, function(valid, errors){
+				socket.emit('createFirstAccount', {
 					"id": request.id,
 					"data": {
 						"valid" : valid,

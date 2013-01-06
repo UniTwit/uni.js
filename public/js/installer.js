@@ -22,17 +22,22 @@ window.onload = function(){
 	doneButton.addEventListener('click', setConfig);
 
 	document.getElementById('callback').innerHTML = window.location.href + "twitter/";
+
+	document.getElementById('twitter').style.display = "none";
+	document.getElementById('redis').style.display = "none";
+	document.getElementById('account').style.display = "none";
 	
 	overlay = document.getElementById('overlay');
 
 	sendRequest('getState',{},function(response){
-		console.log(response);
-		if(response.twitter)
-			document.getElementById('twitter').style.display = "none";
-		if(response.redis)
-			document.getElementById('redis').style.display = "none";
-		if(response.account)
-			document.getElementById('account').style.display = "none";
+		if(!response.twitter)
+			document.getElementById('twitter').style.display = "block";
+		if(!response.redis)
+			document.getElementById('redis').style.display = "block";
+		else
+			if(!response.account)
+				document.getElementById('account').style.display = "block";
+		
 		isConfigured = response;
 	});
 }
@@ -100,27 +105,63 @@ function setConfig(){
 		},
 		function(data){
 			if(data.valid){
-				isConfigured.twitterRedis = true;
+				isConfigured.redis = true;
 				document.getElementById('redis').style.display = "none";
 			}else{
 				console.log(data);
 			}
 			updatePage();
 		});
+	else
+		if(!isConfigured.account)
+			sendRequest('createFirstAccount',
+			{
+				"username" : document.getElementById('login').value,
+				"password" : document.getElementById('password').value,
+				"confirmation" : document.getElementById('confirm').value
+			},
+			function(data){
+				console.log('Receiving "createFirstAccount"...')
+				if(data.valid){
+					isConfigured.account = true;
+					document.getElementById('account').style.display = "none";
+				}else{
+					console.log(data);
+				}
+				updatePage();
+			});
 }
 
 function updatePage(){
-	if(isConfigured.twitter && isConfigured.redis && isConfigured.account){
-		// Reload page
-	}else{
-		doneButton.addEventListener('click', setConfig);
-		doneButton.classList.remove('disabled');
-	}
+
+	sendRequest('getState',{},function(response){
+		if(!response.twitter)
+			document.getElementById('twitter').style.display = "block";
+		if(!response.redis)
+			document.getElementById('redis').style.display = "block";
+		else
+			if(!response.account)
+				document.getElementById('account').style.display = "block";
+		
+		isConfigured = response;
+
+		if(isConfigured.twitter && isConfigured.redis && isConfigured.account){
+			window.location.reload(true);
+		}else{
+			if(isConfigured.redis && !isConfigured.account)
+				document.getElementById('account').style.display = "block";
+			else
+				document.getElementById('account').style.display = "none";
+		}
+	});
+
+	doneButton.addEventListener('click', setConfig);
+	doneButton.classList.remove('disabled');
 }
 
 function sendRequest(name, data, callback){
 	id = Math.random().toString(36).substring(7);
-
+	console.log('Sending "'+name+'" ...');
 	callbacks[id] = callback;
 
 	socket.on(name, function (response) {

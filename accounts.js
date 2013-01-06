@@ -1,4 +1,25 @@
 
-exports.test = function(callback){
+var redis;
+
+exports.link = function(redisDB){
+	redis = redisDB;
+}
+
+exports.test = function(cred, callback){
+	redis.connect(cred.host, cred.port, cred.pass, function(){
+		redis.getAccounts(function(accounts) {
+			if(accounts.length == 0){
+				callback(false);
+			}else{
+				callback(true);
+			}
+		})
+	});
 	callback(false);
+}
+
+exports.create = function(username, password, callback){
+	redis.createAccount(username, {"hash" : password }, function(){ // BADDDDD Bouhhh !!! *purpose testing only*
+		callback();
+	});
 }

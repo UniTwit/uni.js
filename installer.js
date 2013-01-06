@@ -1,6 +1,12 @@
 var	dataSchem  = require('./dataSchem');
 var fs = require('fs');
 
+red   = '\033[31m';
+blue  = '\033[34m';
+green  = '\033[32m';
+white = '\033[0m';
+orange = '\033[33m';
+
 var isReady = {
 	"twitter" : false,
 	"redis" : false,
@@ -13,6 +19,16 @@ exports.isReady = function (){
 }
 
 setReady = function(twitterOK, redisOK, accountIsPresent){
+
+	if(twitterOK != isReady.twitter && twitterOK == true)
+		console.log('TWITTER\t' + green + "OK" + white); 
+	if(redisOK != isReady.redis && redisOK == true)
+		console.log('REDIS\t' + green + "OK" + white); 
+	if(accountIsPresent != isReady.accounts && accountIsPresent == true)
+		console.log('ACCOUNT\t' + green + "OK" + white);
+	if(redisOK && twitterOK && accountIsPresent != isReady.app && redisOK && twitterOK && accountIsPresent == true)
+		console.log('INSTALL\t' + green + "OK" + white);  
+
 	isReady = {
 		"twitter" : twitterOK,
 		"redis" : redisOK,
@@ -30,8 +46,8 @@ exports.test = function (config, twitter, redis, accounts, callback){
 	twitter.test(config.twitter.consumer_key, config.twitter.consumer_secret, config.twitter.callback_url, function(tOK){
 		twitterOK = tOK;
 		if(redisOK !== null && accountIsPresent !== null){
-			callback(twitterOK, redisOK, accountIsPresent);
 			setReady(twitterOK, redisOK, accountIsPresent);
+			callback(twitterOK, redisOK, accountIsPresent);
 		}
 	});
 
@@ -42,16 +58,17 @@ exports.test = function (config, twitter, redis, accounts, callback){
 			accountIsPresent = false;
 
 			if(twitterOK !== null){
-				callback(twitterOK, redisOK, accountIsPresent);
 				setReady(twitterOK, redisOK, accountIsPresent);
+				callback(twitterOK, redisOK, accountIsPresent);
 			}
 		}else{
-			accounts.test(function(aOK){
+			accounts.link(redis);
+			accounts.test(config.redis, function(aOK){
 				accountIsPresent = aOK;
 
 				if(twitterOK !== null){
-					callback(twitterOK, redisOK, accountIsPresent);
 					setReady(twitterOK, redisOK, accountIsPresent);
+					callback(twitterOK, redisOK, accountIsPresent);
 				}
 			});
 
@@ -59,7 +76,7 @@ exports.test = function (config, twitter, redis, accounts, callback){
 	});
 };
 
-exports.setRedisConfig = function(data, redis, config, callback){
+exports.setRedisConfig = function(data, redis, accounts, config, callback){
 
 	var validationErrors = {};
 	var valid = true;
@@ -98,9 +115,62 @@ exports.setRedisConfig = function(data, redis, config, callback){
 					"port" : data.port,
 					"pass" : data.pass
 				}
+				accounts.link(redis);
 				writeConfig(config);
 			}
 	})
+}
+
+exports.createFirstAccount = function(data, accounts, config, callback){
+	var valid = true;
+	var validationErrors = {};
+
+	if(data.username != undefined){
+		if(!isValid(data.username, ['username'])){
+			validationErrors["username"] = "username has an invalid format.";
+			valid = false;	
+		}
+	}else{
+		validationErrors["username"] = "username not provided";
+		valid = false;
+	}
+
+	if(data.password == ""){
+		validationErrors["password"] = "password not provided";
+		valid = false;		
+	}
+
+	if(data.confirmation == ""){
+		validationErrors["confirmation"] = "confirmation not provided";
+		valid = false;		
+	}
+
+	if(data.password != data.confirmation){
+		validationErrors['passwords'] = "passwords don't match";
+		valid = false;
+	}
+
+	if(!valid){
+		setReady(isReady.twitter, isReady.redis, valid);
+		callback(valid, validationErrors);
+	}else{
+		accounts.test(config.redis, function(thereIsAnAccount){
+			if(thereIsAnAccount){
+				validationErrors['accounts'] = "accounts already created";
+				valid = false;
+			}	
+			setReady(isReady.twitter, isReady.redis, thereIsAnAccount);
+			callback(valid, validationErrors);
+
+			if(valid){
+				accounts.create(data.username, data.password, function(){
+					setReady(isReady.twitter, isReady.redis, true);
+					callback(valid, validationErrors);
+				});
+			}
+		});
+	}
+
 }
 
 
