@@ -10,23 +10,31 @@
 <body>
 	<section>
 		<img src="img/uni_f370x210.png" alt="UNI"/>
-		<h3>Hey ! Just one step before you can use UNI!</h3>
+		<h3>Hey ! Just few step before you can use UNI!</h3>
 
-		<article>
-			<h2>Twitter API</h2>
-			<p>Enter here your Twitter app API tokens.</p>
-			<input type="text" id="key" 	placeholder="consumer key"/>
-			<input type="text" id="secret"	placeholder="consumer secret"/>
-			<p><br>Callback url : <span id ="callback">...</span></p>
-			<p>Check if you have the same in your app settings.</p>
-		</article>
-
-		<article>
+		<article id="redis">
 			<h2>Redis DB</h2>
 			<p>Enter here your Redis credentials.</p>
-			<input type="text" id="host"/>
-			<input type="text" id="port"/>
-			<input type="password" id="pass"/>
+			<input type="text" 		id="host"	 placeholder="hostname"/>
+			<input type="text" 		id="port"	 placeholder="port"/>
+			<input type="password" 	id="pass"	 placeholder="securecode"/>
+		</article>
+
+		<article id="account">
+			<h2>UNI account</h2>
+			<p>This account will be created with full rights.</p>
+			<input type="text" 		id="login" 	 placeholder="username"/>
+			<input type="password" 	id="pass"	 placeholder="password"/>
+			<input type="password" 	id="confirm" placeholder="confirmation"/>
+		</article>
+
+		<article id="twitter">
+			<h2>Twitter API</h2>
+			<p>Enter here your Twitter app API tokens.</p>
+			<input type="text" 		id="key" 	 placeholder="consumer key"/>
+			<input type="text" 		id="secret"	 placeholder="consumer secret"/>
+			<p><br>Callback url : <span id ="callback">...</span></p>
+			<p>Check if you have the same in your app settings.</p>
 		</article>
 
 		<button id="doneButton">DONE!</button>

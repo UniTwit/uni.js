@@ -5,18 +5,10 @@ var popups = {};
 var overlay;
 var doneButton;
 
+var isConfigured;
+
 socket.on('connect', function () {
       console.log('Connected !');
-});
-
-socket.on('openTwitterAuthPage', function (data) {
-	console.log('TWUT !\t\t\t'+ data.request_token);
-	overlay.classList.add('block');
-	popups['twitterAuthPage'] = window.open("https://twitter.com/oauth/authenticate?oauth_token=" + data.request_token, '_newtab');
-});
-
-socket.on('closeTwitterAuthPage', function (data) {
-	popups['twitterAuthPage'].close();
 });
 
 
@@ -24,19 +16,25 @@ window.onload = function(){
 	document.getElementById('key').addEventListener('blur', validate);
 	document.getElementById('secret').addEventListener('blur', validate);
 	document.getElementById('port').addEventListener('blur', validate);
+	document.getElementById('login').addEventListener('blur', validate);
 
 	doneButton = document.getElementById('doneButton')
 	doneButton.addEventListener('click', setConfig);
 
-	document.getElementById('callback').innerHTML = window.location.origin + "/twitter";
+	document.getElementById('callback').innerHTML = window.location.href + "twitter/";
 	
 	overlay = document.getElementById('overlay');
 
-	sendRequest('getConfig',{},function(response){
-		for(key in response)
-			if(response[key] !== null)
-				document.getElementById(key).value = response[key];
-	})
+	sendRequest('getState',{},function(response){
+		console.log(response);
+		if(response.twitter)
+			document.getElementById('twitter').style.display = "none";
+		if(response.redis)
+			document.getElementById('redis').style.display = "none";
+		if(response.account)
+			document.getElementById('account').style.display = "none";
+		isConfigured = response;
+	});
 }
 
 function validate(e){
@@ -44,6 +42,9 @@ function validate(e){
 	console.log('Wait for validation...');
 
 	switch(e.target.id){
+		case "login":
+			keys = ['username'];
+		break;
 		case "key":
 			keys = ['twitter', 'consumer_key'];
 		break;
@@ -64,32 +65,57 @@ function validate(e){
 			e.target.classList.remove('valid');
 			e.target.classList.add('invalid');
 		}
-	})
+	});
 }
 
 function setConfig(){
-
 	doneButton.removeEventListener('click', setConfig);
 	doneButton.classList.add('disabled');
 	config = {};
-	config.callback_url = window.location.origin + "/twitter";
-	inputs = document.getElementsByTagName('input');
+	config.callback_url = window.location.href + "twitter/";
 
-	for(i in inputs)
-		config[inputs[i].id] = inputs[i].value;
+	if(!isConfigured.twitter)
+		sendRequest('setTwitterConfig',
+		{
+			"key" : document.getElementById('key').value,
+			"secret" : document.getElementById('secret').value,
+			"callback_url" : window.location.href + "twitter/"
+		},
+		function(data){
+			if(data.valid){
+				isConfigured.twitter = true;
+				document.getElementById('twitter').style.display = "none";
+			}else{
+				console.log(data);
+			}
+			updatePage();
+		});
 
+	if(!isConfigured.redis)
+		sendRequest('setRedisConfig',
+		{
+			"host" : document.getElementById('host').value,
+			"port" : document.getElementById('port').value,
+			"pass" : document.getElementById('pass').value
+		},
+		function(data){
+			if(data.valid){
+				isConfigured.twitterRedis = true;
+				document.getElementById('redis').style.display = "none";
+			}else{
+				console.log(data);
+			}
+			updatePage();
+		});
+}
 
-	sendRequest('setConfig', config, function(response){
-		overlay.classList.remove('block');
+function updatePage(){
+	if(isConfigured.twitter && isConfigured.redis && isConfigured.account){
+		// Reload page
+	}else{
+		doneButton.addEventListener('click', setConfig);
 		doneButton.classList.remove('disabled');
-		if(!response.valid){
-			console.log('INVALID !');
-			console.log(response.validationErrors);
-			doneButton.removeEventListener('click', setConfig);
-		}else{
-			console.log('VALID !');
-		}
-	})
+	}
 }
 
 function sendRequest(name, data, callback){

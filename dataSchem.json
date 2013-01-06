@@ -2,23 +2,33 @@
 
 	"twitter" : {
 		"consumer_key": {
-			"regex" : "^[0-9a-zA-Z]{18,25}$"
+			"regex" : "^[0-9a-zA-Z]{18,25}$",
+			"hint": ""
 		},
 		"consumer_secret":{
-			"regex" : "^[0-9a-zA-Z]{38,45}$"
+			"regex" : "^[0-9a-zA-Z]{38,45}$",
+			"hint": ""
 		},
 		"access_token": {
-			"regex" : "^[0-9]{8}-[0-9a-zA-Z]{38,45}$"
+			"regex" : "^[0-9]{8}-[0-9a-zA-Z]{38,45}$",
+			"hint": ""
 		},
 		"access_token_secret":{
-			"regex" : "^[0-9a-zA-Z]{38,45}$"
+			"regex" : "^[0-9a-zA-Z]{38,45}$",
+			"hint": ""
 		}
 	},
 
 	"port" : {
 		"dataType":"int",
 		"min":10,
-		"max":65535
+		"max":65535,
+		"hint": ""
+	},
+
+	"username" : {
+		"regex": "^[a-zA-Z]{2,255}$",
+		"hint": "Use only letter."
 	}
 
 }

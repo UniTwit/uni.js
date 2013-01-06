@@ -10,10 +10,9 @@ red   = '\033[31m';
 blue  = '\033[34m';
 green  = '\033[32m';
 white = '\033[0m';
+orange = '\033[33m';
 
-console.log(red + "UNI" + green + "\nv0.1.0004"+ white);
-
-
+console.log(blue + "UNI\t" + white + "v0.1.5");
 
 // modules / config / static data
 var fs = require('fs');
@@ -21,29 +20,38 @@ var http = require('http');
 
 var twitter = require('./twitter.js');
 var redis = require('./redis.js');
+var accounts = require('./accounts.js');
+var installer =  require('./installer.js');
 
 var config = require('./config');
 var mimetypes  = require('./mime-type');
-var	dataSchem  = require('./dataSchem');
-
-// start http/io server
-http_server = http.createServer(onRequest)
-var io = require('socket.io').listen(http_server);
-http_server.listen(config.http_port);
-console.log("HTTP "+ green + "OK " + blue + config.http_port + white);
 
 // determine if UNI is correctly installed
-var installed = config.twitter.consumer_key !== null && config.twitter.consumer_secret !== null;
-if(installed)
-	console.log('INSTALL '+ green + "OK" + white);
-else
-	console.log('INSTALL '+ red + "BAD" + white);
+installer.test(config, twitter, redis, accounts, init);
+
+function init(twitterOK, redisOK, accountIsPresent){
+
+	if(redisOK && twitterOK && accountIsPresent){
+		console.log('INSTALL\t' + green + "OK" + white); 
+	}else{
+		console.log('INSTALL\t' + orange + "PARTIAL" + white);
+	}
+
+	// start http/io server
+	http_server = http.createServer(onHTTPRequest);
+	var io = require('socket.io').listen(http_server);
+	http_server.listen(config.http_port);
+	console.log("HTTP\t"+ green + "OK\t" + blue + config.http_port + white);
+	io.set('log level', 1);
+	io.sockets.on('connection', onSocketClient);
+
+}
 
 
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 //					HTTP SERVER
 
-function onRequest(req, res){
+function onHTTPRequest(req, res){
 
 	// grab first element in the url to know what to do.
 
@@ -67,7 +75,7 @@ function onRequest(req, res){
 		break;
 		default:
 			// send satics html file by default
-			if (installed) {
+			if (installer.isReady().app) {
 				sendFile('/pages/app.html',res);
 			}else{
 				sendFile('/pages/install.html',res);
@@ -76,157 +84,81 @@ function onRequest(req, res){
 		}	
 	}
 
-	/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
+/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 //					SOCKET.io
-
-io.set('log level', 1);
-
-io.sockets.on('connection', function (socket) {
+function onSocketClient(socket) {
 
 	socket.on('dataValidation', function (request) {
 		socket.emit("dataValidation", {
 			"id" : request.id,
 			"data" : {
-				"valid" : isValid(request.data.value, request.data.keys)
+				"valid" : installer.isValid(request.data.value, request.data.keys)
 			}
 		});
 	});
 
-	socket.on('getConfig', function (request) {
-		if(!installed){
-			socket.emit("getConfig", {
-				"id" : request.id,
-				"data" : {
-					"key" : config.twitter.consumer_key,
-					"secret" : config.twitter.consumer_secret,
-					"host" : config.redis.host,
-					"port" : config.redis.port
-				}
-			});
-		}else{
-			socket.emit("getConfig", {
+	socket.on('getState', function (request) {
+		if(installer.isReady().app){
+			socket.emit("getState", {
 				"id" : request.id,
 				"err": {"id": 100, "text": "Already installed"}
+			});
+		}else{
+			installer.test(config, twitter, redis, accounts, function(twitterOK, redisOK, accountIsPresent){
+				socket.emit("getState", {
+					"id" : request.id,
+					"data" : {
+						"twitter": twitterOK,
+						"redis" : redisOK,
+						"account" : accountIsPresent
+					}
+				});
 			});
 		}
 	});
 
-	socket.on('setConfig', function (request){
-		if(!installed){
-
-			var validationErrors = {};
-			var valid = true;
-
-			if(request.data.key != undefined){
-				if(!isValid(request.data.key, ['twitter','consumer_key'])){
-					validationErrors["key"] = "consumer_key has an invalid format.";
-					valid = false;	
-				}
-			}else{
-				validationErrors["key"] = "consumer_key not provided";
-				valid = false;
-			}
-
-			if(request.data.secret != undefined){
-				if(!isValid(request.data.secret, ['twitter','consumer_secret'])){
-					validationErrors["secret"] = "consumer_secret has an invalid format.";
-					valid = false;	
-				}
-			}else{
-				validationErrors["secret"] = "consumer_secret not provided";
-				valid = false;
-			}
-
-			if(request.data.port != undefined){
-				if(!isValid(request.data.port, ['port'])){
-					validationErrors["port"] = "port has an invalid format.";
-					valid = false;	
-				}
-			}else{
-				validationErrors["port"] = "port not provided";
-				valid = false;
-			}
-
-			if(request.data.host == ""){
-				validationErrors["host"] = "host not provided";
-				valid = false;
-			}
-
-			if(request.data.pass == ""){
-				validationErrors["pass"] = "pass not provided";
-				valid = false;
-			}
-
-			if(!valid){
-				socket.emit("setConfig", {
+	socket.on('setTwitterConfig', function(request){
+		if(installer.isReady().twitter){
+			socket.emit("setTwitterConfig", {
+				"id" : request.id,
+				"err": {"id": 100, "text": "Already installed"}
+			});
+		}else{
+			installer.setTwitterConfig(request.data, twitter, config, function(valid, errors){
+				socket.emit('setTwitterConfig', {
 					"id": request.id,
 					"data": {
-						"valid" : false,
-						"validationErrors" : validationErrors
+						"valid" : valid,
+						"validationErrors" : errors
 					}
 				});
-			}else{
-				redis.test(request.data.host, request.data.port, request.data.pass, function (redisSuccess) {
-					if(!redisSuccess){
-						validationErrors['redis'] = "Unable to connect to Redis.";
-						valid = false;
-						console.log("REDIS "+ red + "BAD"+ white);
-					}else{
-						console.log("REDIS "+ green + "OK"+ white);
+			});
+		}	
+	});
+
+	socket.on('setRedisConfig', function(request){
+		if(installer.isReady().redis){
+			socket.emit("setRedisConfig", {
+				"id" : request.id,
+				"err": {"id": 100, "text": "Already installed"}
+			});
+		}else{
+			installer.setRedisConfig(request.data, redis, config, function(valid, errors){
+				socket.emit('setRedisConfig', {
+					"id": request.id,
+					"data": {
+						"valid" : valid,
+						"validationErrors" : errors
 					}
-
-					twitter.test(request.data.key, request.data.secret, request.data.callback_url, socket, function (twitterSuccess){
-						if(!twitterSuccess){
-							validationErrors['twitter'] = "Unable to connect to twitter.";
-							valid = false;
-							console.log("TWITTER "+ red + "BAD"+ white);
-						}else{
-							console.log("TWITTER "+ green + "OK"+ white);
-						}
-
-						if(valid){
-							socket.emit("setConfig", {
-								"id": request.id,
-								"data": {
-									"valid" : true
-								}
-							});
-						}else{
-							socket.emit("setConfig", {
-								"id": request.id,
-								"data": {
-									"valid" : false,
-									"validationErrors" : validationErrors
-								}
-							});
-						}
-
-					});
 				});
+			});
+		}	
+	});
 }
-
-}else{
-	socket.emit("setConfig", {
-		"id" : request.id,
-		"err": {"id": 100, "text": "Already installed"}
-	});	
-}
-});
-
-});
 
 
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 //						UTILS
-
-function cloneObject(object) {
-	var newObj = (object instanceof Array) ? [] : {};
-	for (i in object) {
-		if (object[i] && typeof object[i] == "object") {
-			newObj[i] = cloneObject(object[i]);
-		} else newObj[i] = object[i]
-	} return newObj;
-};
 
 function sendFile(path, res){
 	fs.readFile("public" + path, function(err, data){
@@ -247,41 +179,3 @@ function sendFile(path, res){
 		res.end();
 	});
 }
-
-function isValid(data, keys){
-	schem = cloneObject(dataSchem);
-	for (i in keys) 
-		if(schem.hasOwnProperty(keys[i]))
-			schem = schem[keys[i]];	
-
-
-		valid = true;
-
-		if(schem.regex != undefined){
-			regex = new RegExp(schem.regex);
-			valid = valid && regex.test(data);
-		}
-
-		if(schem.dataType != undefined){
-			switch(schem.dataType){
-				case "int":
-				if(!isNaN(parseInt(data))){
-					if (schem.max != undefined)
-						valid = valid && data <= schem.max;
-					if (schem.min != undefined)
-						valid = valid && data >= schem.min;
-				}else{
-					valid = false;
-				}
-				break;
-				case "string":
-				if(schem.max != undefined)
-					valid = valid && data.toString.length <= max;
-				if(schem.min != undefined)
-					valid = valid && data.toString.length >= min;
-				break;
-
-			}
-		}
-		return valid;
-	}
