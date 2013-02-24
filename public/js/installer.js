@@ -27,6 +27,10 @@ function initEvents(){
 	document.getElementById('set_twitter').addEventListener('click', setConfig);
 	document.getElementById('set_redis').addEventListener('click', setConfig);
 	document.getElementById('set_account').addEventListener('click', setConfig);
+
+	document.getElementById('yeah').addEventListener('click', function(){
+		window.location.reload(false); 
+	});
 	
 	overlay = document.getElementById('overlay');
 }
