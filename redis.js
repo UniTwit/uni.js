@@ -28,10 +28,12 @@ exports.test = function (host, port, pass, callback){
 	if(host != null && port != null && pass != null){
 		client = redis.createClient(port, host);
 		client.auth(pass);
-
 		client.on('ready', function(){
 			client.end();
-			callback(true);	
+			if(!callbackTriggered){
+				callback(true);
+				callbackTriggered = true;
+			}	
 		});
 		client.on('error', function(){
 			if(!callbackTriggered){
@@ -43,7 +45,10 @@ exports.test = function (host, port, pass, callback){
 			}
 		});
 	}else{
-		callback(false);
+		if(!callbackTriggered){
+			callback(false);
+			callbackTriggered = true;
+		}
 	}
 }
 

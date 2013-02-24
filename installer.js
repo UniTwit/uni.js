@@ -45,34 +45,21 @@ exports.test = function (config, twitter, redis, accounts, callback){
 
 	twitter.test(config.twitter.consumer_key, config.twitter.consumer_secret, config.twitter.callback_url, function(tOK){
 		twitterOK = tOK;
-		if(redisOK !== null && accountIsPresent !== null){
-			setReady(twitterOK, redisOK, accountIsPresent);
-			callback(twitterOK, redisOK, accountIsPresent);
-		}
-	});
-
-	redis.test(config.redis.host, config.redis.port, config.redis.pass,function(rOK){
-
-		redisOK = rOK;
-		if(!rOK){
-			accountIsPresent = false;
-
-			if(twitterOK !== null){
+		redis.test(config.redis.host, config.redis.port, config.redis.pass,function(rOK){
+			redisOK = rOK;
+			if(rOK === false){
+				accountIsPresent = false;
 				setReady(twitterOK, redisOK, accountIsPresent);
 				callback(twitterOK, redisOK, accountIsPresent);
-			}
-		}else{
-			accounts.link(redis);
-			accounts.test(config.redis, function(aOK){
-				accountIsPresent = aOK;
-
-				if(twitterOK !== null){
+			}else{
+				accounts.link(redis);
+				accounts.test(config.redis, function(aOK){
+					accountIsPresent = aOK;
 					setReady(twitterOK, redisOK, accountIsPresent);
 					callback(twitterOK, redisOK, accountIsPresent);
-				}
-			});
-
-		}
+				});
+			}
+		});
 	});
 };
 

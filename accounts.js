@@ -15,7 +15,6 @@ exports.test = function(cred, callback){
 			}
 		})
 	});
-	callback(false);
 }
 
 exports.create = function(username, password, callback){
