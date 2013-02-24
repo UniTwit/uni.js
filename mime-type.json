@@ -5,6 +5,7 @@
 	
 	"png"	:	"image/png",
 	"jpg"	:	"image/jpeg",
+	"svg"	:	"image/svg+xml",
 
 	"otf"  	: 	"font/opentype"
 }
