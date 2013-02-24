@@ -24,17 +24,23 @@ exports.connect = function (host, port, pass, callback) {
 }
 
 exports.test = function (host, port, pass, callback){
+	callbackTriggered = false;
 	if(host != null && port != null && pass != null){
 		client = redis.createClient(port, host);
 		client.auth(pass);
 
 		client.on('ready', function(){
-			callback(true);
 			client.end();
+			callback(true);	
 		});
 		client.on('error', function(){
-			callback(false);
-			client.end();
+			if(!callbackTriggered){
+				callback(false);
+				callbackTriggered = true;
+			}else{
+				//client.end();
+				// can't close connection -> get a unhandled error...
+			}
 		});
 	}else{
 		callback(false);

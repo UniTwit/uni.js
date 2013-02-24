@@ -77,7 +77,6 @@ exports.test = function (config, twitter, redis, accounts, callback){
 };
 
 exports.setRedisConfig = function(data, redis, accounts, config, callback){
-
 	var validationErrors = {};
 	var valid = true;
 
@@ -101,24 +100,34 @@ exports.setRedisConfig = function(data, redis, accounts, config, callback){
 		valid = false;
 	}
 
-	redis.test(data.host, data.port, data.pass, function(redisSuccess){
-		if(!redisSuccess){
+	if(valid){
+		redis.test(data.host, data.port, data.pass, function(redisSuccess){
+			if(!redisSuccess){
+
 				validationErrors['redis'] = "Unable to connect to redis.";
 				valid = false;
 			}
 			setReady(isReady.twitter, valid, isReady.accounts);
+
 			callback(valid, validationErrors);
 
 			if(valid){
+
 				config.redis = {
 					"host" : data.host,
 					"port" : data.port,
 					"pass" : data.pass
 				}
+
 				accounts.link(redis);
+
 				writeConfig(config);
 			}
-	})
+		});
+	}else{
+		setReady(isReady.twitter, valid, isReady.accounts);
+		callback(valid, validationErrors);	
+	}
 }
 
 exports.createFirstAccount = function(data, accounts, config, callback){
