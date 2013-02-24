@@ -1,68 +1,54 @@
 var socket = io.connect();
-var callbacks = {};
 var popups = {};
 
 var overlay;
 var doneButton;
 
 var isConfigured;
+var isSeen  = {"twitter":false,"redis":false,"account":false};
+var callbacks = {};
 
 socket.on('connect', function () {
-      console.log('Connected !');
+	console.log('Connected !');
+	initEvents();
+	updatePage();
 });
 
 
-window.onload = function(){
+
+function initEvents(){
 	document.getElementById('key').addEventListener('blur', validate);
 	document.getElementById('secret').addEventListener('blur', validate);
 	document.getElementById('port').addEventListener('blur', validate);
 	document.getElementById('login').addEventListener('blur', validate);
 
-	doneButton = document.getElementById('doneButton')
-	doneButton.addEventListener('click', setConfig);
-
 	document.getElementById('callback').innerHTML = window.location.href + "twitter/";
 
-	document.getElementById('twitter').style.display = "none";
-	document.getElementById('redis').style.display = "none";
-	document.getElementById('account').style.display = "none";
+	document.getElementById('set_twitter').addEventListener('click', setConfig);
+	document.getElementById('set_redis').addEventListener('click', setConfig);
+	document.getElementById('set_account').addEventListener('click', setConfig);
 	
 	overlay = document.getElementById('overlay');
-
-	sendRequest('getState',{},function(response){
-		if(!response.twitter)
-			document.getElementById('twitter').style.display = "block";
-		if(!response.redis)
-			document.getElementById('redis').style.display = "block";
-		else
-			if(!response.account)
-				document.getElementById('account').style.display = "block";
-		
-		isConfigured = response;
-	});
 }
 
 function validate(e){
 
-	console.log('Wait for validation...');
-
 	switch(e.target.id){
 		case "login":
-			keys = ['username'];
+		keys = ['username'];
 		break;
 		case "key":
-			keys = ['twitter', 'consumer_key'];
+		keys = ['twitter', 'consumer_key'];
 		break;
 		case "secret":
-			keys = ['twitter','consumer_secret'];
+		keys = ['twitter','consumer_secret'];
 		break;
 		case "port":
-			keys = ['port'];
+		keys = ['port'];
 		break;
 	}
 
 	sendRequest('dataValidation', {"value" : e.target.value, "keys" : keys}, function(response){
-		console.log(response.valid);
 		if(response.valid){
 			e.target.classList.add('valid');
 			e.target.classList.remove('invalid');
@@ -74,12 +60,11 @@ function validate(e){
 }
 
 function setConfig(){
-	doneButton.removeEventListener('click', setConfig);
-	doneButton.classList.add('disabled');
+	hideForm(currentForm);
 	config = {};
 	config.callback_url = window.location.href + "twitter/";
 
-	if(!isConfigured.twitter)
+	if(currentForm == "twitter"){
 		sendRequest('setTwitterConfig',
 		{
 			"key" : document.getElementById('key').value,
@@ -89,14 +74,13 @@ function setConfig(){
 		function(data){
 			if(data.valid){
 				isConfigured.twitter = true;
-				document.getElementById('twitter').style.display = "none";
 			}else{
 				console.log(data);
 			}
 			updatePage();
 		});
 
-	if(!isConfigured.redis)
+	}else if(currentForm == "redis"){
 		sendRequest('setRedisConfig',
 		{
 			"host" : document.getElementById('host').value,
@@ -106,62 +90,88 @@ function setConfig(){
 		function(data){
 			if(data.valid){
 				isConfigured.redis = true;
-				document.getElementById('redis').style.display = "none";
 			}else{
 				console.log(data);
 			}
 			updatePage();
 		});
-	else
-		if(!isConfigured.account)
-			sendRequest('createFirstAccount',
-			{
-				"username" : document.getElementById('login').value,
-				"password" : document.getElementById('password').value,
-				"confirmation" : document.getElementById('confirm').value
-			},
-			function(data){
-				console.log('Receiving "createFirstAccount"...')
-				if(data.valid){
-					isConfigured.account = true;
-					document.getElementById('account').style.display = "none";
-				}else{
-					console.log(data);
-				}
-				updatePage();
-			});
+
+	}else if(currentForm == "account"){
+		sendRequest('createFirstAccount',
+		{
+			"username" : document.getElementById('login').value,
+			"password" : document.getElementById('password').value,
+			"confirmation" : document.getElementById('confirm').value
+		},
+		function(data){
+			console.log('Receiving "createFirstAccount"...')
+			if(data.valid){
+				isConfigured.account = true;
+			}else{
+				console.log(data);
+			}
+			updatePage();
+		});
+	}
 }
 
 function updatePage(){
-
+	currentForm = "installed"
 	sendRequest('getState',{},function(response){
-		if(!response.twitter)
-			document.getElementById('twitter').style.display = "block";
-		if(!response.redis)
-			document.getElementById('redis').style.display = "block";
-		else
-			if(!response.account)
-				document.getElementById('account').style.display = "block";
-		
-		isConfigured = response;
-
-		if(isConfigured.twitter && isConfigured.redis && isConfigured.account){
-			window.location.reload(true);
+		if(response.twitter){
+			setIndic('twitter', 'valid');
 		}else{
-			if(isConfigured.redis && !isConfigured.account)
-				document.getElementById('account').style.display = "block";
+			if(!isSeen.twitter)
+				setIndic('twitter', 'unconfigured');
 			else
-				document.getElementById('account').style.display = "none";
+				setIndic('twitter', 'invalid');
+			currentForm = "twitter";
 		}
-	});
 
-	doneButton.addEventListener('click', setConfig);
-	doneButton.classList.remove('disabled');
+		if(response.redis){
+			setIndic('redis', 'valid');
+			if(response.account){
+				setIndic('account', 'valid');
+			}else{
+				if(!isSeen.account)
+					setIndic('account', 'unconfigured');
+				else
+					setIndic('account', 'invalid');
+				currentForm = "account";
+			}
+		}else{
+			if(!isSeen.redis)
+				setIndic('redis', 'unconfigured');
+			else
+				setIndic('redis', 'invalid');
+			currentForm = "redis";
+		}
+		isConfigured = response;
+		setupForm(currentForm);
+	});
+}
+
+
+function setIndic(id, state){
+	indic = document.getElementById('indic_'+id);
+	indic.classList.remove('unconfigured');
+	indic.classList.remove('valid');
+	indic.classList.remove('invalid');
+	indic.classList.remove('loading');
+	indic.classList.add(state);
+}
+
+function setupForm(id){
+	document.getElementById(id).classList.add('visible');
+	isSeen[id] = true;
+}
+function hideForm(id){
+
+	document.getElementById(id).classList.remove('visible');
 }
 
 function sendRequest(name, data, callback){
 	id = Math.random().toString(36).substring(7);
-	console.log('Sending "'+name+'" ...');
 	callbacks[id] = callback;
 
 	socket.on(name, function (response) {
@@ -169,10 +179,10 @@ function sendRequest(name, data, callback){
 			if(response.err){
 				console.log("ERROR No " + response.err.id +" : " + response.err.text);
 			}else{
-      			callbacks[response.id](response.data);
-      		}
-      	callbacks[response.id] = null;
-	});
+				callbacks[response.id](response.data);
+			}
+			callbacks[response.id] = null;
+		});
 
 	socket.emit(name, {"id" : id, "data" : data});
 }

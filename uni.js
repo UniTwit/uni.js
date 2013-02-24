@@ -102,23 +102,17 @@ function onSocketClient(socket) {
 	});
 
 	socket.on('getState', function (request) {
-		if(installer.isReady().app){
+		installer.test(config, twitter, redis, accounts, function(twitterOK, redisOK, accountIsPresent){
 			socket.emit("getState", {
 				"id" : request.id,
-				"err": {"id": 100, "text": "Already installed"}
+				"data" : {
+					"twitter": twitterOK,
+					"redis" : redisOK,
+					"account" : accountIsPresent
+				}
 			});
-		}else{
-			installer.test(config, twitter, redis, accounts, function(twitterOK, redisOK, accountIsPresent){
-				socket.emit("getState", {
-					"id" : request.id,
-					"data" : {
-						"twitter": twitterOK,
-						"redis" : redisOK,
-						"account" : accountIsPresent
-					}
-				});
-			});
-		}
+		});
+		
 	});
 
 	socket.on('setTwitterConfig', function(request){

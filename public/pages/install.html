@@ -11,13 +11,21 @@
 	<section>
 		<img src="img/uni_r.png" alt="UNI"/>
 		<h3>Hey! Just few steps before you can use UNI!</h3>
-
+		<aside id="status">
+			<ul>
+				<li id="indic_redis" class="unconfigured" >Redis <div></div></li>
+				<li id="indic_account" class="unconfigured" >Account <div></div></li>
+				<li id="indic_twitter" class="unconfigured" >Twitter <div></div></li>
+			</ul>
+		</aside>
 		<article id="redis">
 			<h2>Redis DB</h2>
 			<p>Enter here your Redis credentials.</p>
 			<input type="text" 		id="host"	 placeholder="hostname"/>
 			<input type="text" 		id="port"	 placeholder="port"/>
 			<input type="password" 	id="pass"	 placeholder="securecode"/>
+
+			<button id="set_redis">DONE!</button>
 		</article>
 
 		<article id="account">
@@ -26,6 +34,8 @@
 			<input type="text" 		id="login" 	 placeholder="username"/>
 			<input type="password" 	id="password" placeholder="password"/>
 			<input type="password" 	id="confirm" placeholder="confirmation"/>
+
+			<button id="set_twitter">DONE!</button>
 		</article>
 
 		<article id="twitter">
@@ -35,10 +45,13 @@
 			<input type="text" 		id="secret"	 placeholder="consumer secret"/>
 			<p><br>Callback url : <span id ="callback">...</span></p>
 			<p>Check if you have the same in your app settings.</p>
-		</article>
 
-		<button id="doneButton">DONE!</button>
-		
+			<button id="set_account">DONE!</button>
+		</article>
+		<article id="installed">
+			<h3>You've just completed the installation!</h3>
+			<button id="yeah">Yeah!</button>
+		</article>				
 	</section>
 	<div id="overlay"></div>
 </body>
