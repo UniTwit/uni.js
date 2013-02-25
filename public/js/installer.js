@@ -108,7 +108,6 @@ function setConfig(){
 			"confirmation" : document.getElementById('confirm').value
 		},
 		function(data){
-			console.log('Receiving "createFirstAccount"...')
 			if(data.valid){
 				isConfigured.account = true;
 			}else{
@@ -177,17 +176,16 @@ function hideForm(id){
 function sendRequest(name, data, callback){
 	id = Math.random().toString(36).substring(7);
 	callbacks[id] = callback;
-
 	socket.on(name, function (response) {
-		if(callbacks[response.id] !== null)
+		if(callbacks[response.id] !== null){
 			if(response.err){
 				console.log("ERROR No " + response.err.id +" : " + response.err.text);
 			}else{
 				callbacks[response.id](response.data);
 			}
 			callbacks[response.id] = null;
-		});
-
+		}
+	});
 	socket.emit(name, {"id" : id, "data" : data});
 }
 

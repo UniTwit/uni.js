@@ -1,5 +1,9 @@
+// account.js
 
 var redis;
+
+exports.getActions = function(addAction){
+}
 
 exports.link = function(redisDB){
 	redis = redisDB;

@@ -7,7 +7,10 @@ var callbacks = {};
 var tokens = {};
 var timeout = 30000;
 
-var getRequestToken
+var getRequestToken;
+
+exports.getActions = function(addAction){
+}
 
 exports.test = function(consumer_key, consumer_secret, callback_url, callback){
 	if(consumer_key != null && consumer_secret != null && callback_url != null){

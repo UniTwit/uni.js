@@ -4,6 +4,9 @@ var redis = require('redis');
 var db;
 var connected = false;
 
+exports.getActions = function(addAction){
+}
+
 exports.connect = function (host, port, pass, callback) {
 	if(!connected){
 		db = redis.createClient(port, host);
@@ -16,7 +19,7 @@ exports.connect = function (host, port, pass, callback) {
 		});
 
 		db.on('error', function(error){
-			console.log("REDIS ERROR");
+			console.log("REDIS ERROR".red);
 		});
 	}else{
 		callback();
@@ -28,14 +31,14 @@ exports.test = function (host, port, pass, callback){
 	if(host != null && port != null && pass != null){
 		client = redis.createClient(port, host);
 		client.auth(pass);
-		client.on('ready', function(){
+
+		client.on('ready', function(e){
 			client.end();
-			if(!callbackTriggered){
-				callback(true);
-				callbackTriggered = true;
-			}	
+			callback(true);
+			callbackTriggered = true;
 		});
-		client.on('error', function(){
+
+		client.on('error', function(e){
 			if(!callbackTriggered){
 				callback(false);
 				callbackTriggered = true;
@@ -43,6 +46,7 @@ exports.test = function (host, port, pass, callback){
 				//client.end();
 				// can't close connection -> get a unhandled error...
 			}
+			delete client;
 		});
 	}else{
 		if(!callbackTriggered){

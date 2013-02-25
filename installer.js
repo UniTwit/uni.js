@@ -1,65 +1,100 @@
-var	dataSchem  = require('./dataSchem');
+// installer.js
+
 var fs = require('fs');
 var colors = require('colors2');
 
 var isReady = {
 	"twitter" : false,
 	"redis" : false,
-	"accounts" : false,
+	"account" : false,
 	"app" : false
 };
 
+var config = null;
+var twitter = null;
+var redis = null;
+var accounts = null;
+
+var onReady = null;
+
+exports.setup = function(c, t, r, a){
+	config = c;
+	twitter = t;
+	redis = r;
+	accounts = a;
+}
+
+exports.onReady = function(callback){
+	onReady = callback;
+}
 
 exports.isReady = function (){
 	return isReady;
 }
 
-setReady = function(twitterOK, redisOK, accountIsPresent){
-
-	if(twitterOK != isReady.twitter && twitterOK == true)
-		console.log('TWITTER\t' + "OK".green); 
-	if(redisOK != isReady.redis && redisOK == true)
-		console.log('REDIS\t' + "OK".green); 
-	if(accountIsPresent != isReady.accounts && accountIsPresent == true)
-		console.log('ACCOUNT\t' + "OK".green);
-	if(redisOK && twitterOK && accountIsPresent != isReady.app && redisOK && twitterOK && accountIsPresent == true)
-		console.log('INSTALL\t' + "OK".green);  
-
-	isReady = {
-		"twitter" : twitterOK,
-		"redis" : redisOK,
-		"accounts" : accountIsPresent,
-		"app" : redisOK && twitterOK && accountIsPresent
-	};
+exports.getActions = function(addAction){
+	addAction("createFirstAccount", onCreateFirstAccount);
+	addAction("getState", onGetState);
+	addAction("setTwitterConfig", onSetTwitterConfig);
+	addAction("setRedisConfig", onSetRedisConfig);
 }
 
-exports.test = function (config, twitter, redis, accounts, callback){
 
-	var redisOK = null;
-	var twitterOK = null;
-	var accountIsPresent = null;
+// webSocket calls
 
-	twitter.test(config.twitter.consumer_key, config.twitter.consumer_secret, config.twitter.callback_url, function(tOK){
-		twitterOK = tOK;
-		redis.test(config.redis.host, config.redis.port, config.redis.pass,function(rOK){
-			redisOK = rOK;
-			if(rOK === false){
-				accountIsPresent = false;
-				setReady(twitterOK, redisOK, accountIsPresent);
-				callback(twitterOK, redisOK, accountIsPresent);
-			}else{
-				accounts.link(redis);
-				accounts.test(config.redis, function(aOK){
-					accountIsPresent = aOK;
-					setReady(twitterOK, redisOK, accountIsPresent);
-					callback(twitterOK, redisOK, accountIsPresent);
-				});
-			}
+onGetState = function(request, callback){
+	err = null;
+	data = isReady;
+	callback(err, data);
+}
+
+onSetTwitterConfig = function(request, callback){
+	if(isReady.twitter){
+		err = {"id": 101, "text": "Twitter is already configured."};
+		data = null;
+		callback(err, data);
+	}else{
+		setTwitterConfig(request.data, function(valid, validationErrors){
+			err = null;
+			data = {"valid": valid,"validationErrors" : validationErrors};
+			callback(err, data);
 		});
-	});
-};
+	}
+}
 
-exports.setRedisConfig = function(data, redis, accounts, config, callback){
+onSetRedisConfig = function(request, callback){
+	if(isReady.redis){
+		err = {"id": 102, "text": "Redis is already configured."}
+		data = null;
+		callback(err, data);
+	}else{
+		setRedisConfig(request.data, function(valid, validationErrors){
+			err = null;
+			data = {"valid": valid,"validationErrors" : validationErrors};
+			callback(err, data);
+		});
+	}
+}
+
+onCreateFirstAccount = function(request, callback){
+	if(!isReady.redis){
+		err = {"id": 104, "text": "You must configure Redis before create the first account."}
+		data = null;
+		callback(err, data);
+	}else if(isReady.account){
+		err = {"id": 103, "text": "First account already created."}
+		data = null;
+		callback(err, data);
+	}else{
+		createFirstAccount(request.data, function(valid, validationErrors){
+			err = null;
+			data = {"valid": valid,"validationErrors" : validationErrors};
+			callback(err, data);
+		});
+	}
+}
+
+setRedisConfig = function(data, callback){
 	var validationErrors = {};
 	var valid = true;
 
@@ -86,13 +121,10 @@ exports.setRedisConfig = function(data, redis, accounts, config, callback){
 	if(valid){
 		redis.test(data.host, data.port, data.pass, function(redisSuccess){
 			if(!redisSuccess){
-
 				validationErrors['redis'] = "Unable to connect to redis.";
 				valid = false;
 			}
-			setReady(isReady.twitter, valid, isReady.accounts);
-
-			callback(valid, validationErrors);
+			setReady(isReady.twitter, valid, isReady.account);
 
 			if(valid){
 
@@ -103,17 +135,23 @@ exports.setRedisConfig = function(data, redis, accounts, config, callback){
 				}
 
 				accounts.link(redis);
-
 				writeConfig(config);
+
+				checkInstall(function(){
+					callback(valid, validationErrors);
+				});
+			}else{
+				callback(valid, validationErrors);	
 			}
+
 		});
 	}else{
-		setReady(isReady.twitter, valid, isReady.accounts);
+		setReady(isReady.twitter, valid, isReady.account);
 		callback(valid, validationErrors);	
 	}
 }
 
-exports.createFirstAccount = function(data, accounts, config, callback){
+createFirstAccount = function(data, callback){
 	var valid = true;
 	var validationErrors = {};
 
@@ -148,7 +186,7 @@ exports.createFirstAccount = function(data, accounts, config, callback){
 	}else{
 		accounts.test(config.redis, function(thereIsAnAccount){
 			if(thereIsAnAccount){
-				validationErrors['accounts'] = "accounts already created";
+				validationErrors['account'] = "account already created";
 				valid = false;
 			}	
 			setReady(isReady.twitter, isReady.redis, thereIsAnAccount);
@@ -165,8 +203,7 @@ exports.createFirstAccount = function(data, accounts, config, callback){
 
 }
 
-
-exports.setTwitterConfig = function (data, twitter, config, callback){
+setTwitterConfig = function (data, callback){
 
 	var validationErrors = {};
 	var valid = true;
@@ -197,7 +234,7 @@ exports.setTwitterConfig = function (data, twitter, config, callback){
 	}
 
 	if(!valid){
-		setReady(valid, isReady.redis, isReady.accounts);
+		setReady(valid, isReady.redis, isReady.account);
 		callback(valid, validationErrors);
 	}else{
 		twitter.test(data.key, data.secret, data.callback_url, function (twitterSuccess){
@@ -205,7 +242,7 @@ exports.setTwitterConfig = function (data, twitter, config, callback){
 				validationErrors['twitter'] = "Unable to connect to twitter.";
 				valid = false;
 			}
-			setReady(valid, isReady.redis, isReady.accounts);
+			setReady(valid, isReady.redis, isReady.account);
 			callback(valid, validationErrors);
 
 			if(valid){
@@ -222,50 +259,68 @@ exports.setTwitterConfig = function (data, twitter, config, callback){
 	}
 }
 
+
+setReady = function(twitterOK, redisOK, accountIsPresent){
+
+	if(twitterOK != isReady.twitter && twitterOK == true)
+		console.log('TWITTER\t' + "OK".green); 
+	if(redisOK != isReady.redis && redisOK == true)
+		console.log('REDIS\t' + "OK".green); 
+	if(accountIsPresent != isReady.account && accountIsPresent == true)
+		console.log('ACCOUNT\t' + "OK".green);
+	if(redisOK && twitterOK && accountIsPresent != isReady.app && redisOK && twitterOK && accountIsPresent == true){
+		console.log('INSTALL\t' + "OK".green);
+		if(onReady !== null)
+			onReady();
+	}  
+
+	isReady = {
+		"twitter" : twitterOK,
+		"redis" : redisOK,
+		"account" : accountIsPresent,
+		"app" : redisOK && twitterOK && accountIsPresent
+	};
+}
+
+checkInstall = function (callback){
+
+	var redisOK = null;
+	var twitterOK = null;
+	var accountIsPresent = null;
+
+	twitter.test(config.twitter.consumer_key, config.twitter.consumer_secret, config.twitter.callback_url, function(tOK){
+
+		twitterOK = tOK;
+
+		redis.test(config.redis.host, config.redis.port, config.redis.pass,function(rOK){
+
+			redisOK = rOK;
+			if(rOK === false){
+
+				accountIsPresent = false;
+				setReady(twitterOK, redisOK, accountIsPresent);
+				callback(twitterOK, redisOK, accountIsPresent);
+			}else{
+
+				accounts.link(redis);
+				accounts.test(config.redis, function(aOK){
+					accountIsPresent = aOK;
+					setReady(twitterOK, redisOK, accountIsPresent);
+					callback(twitterOK, redisOK, accountIsPresent);
+				});
+			}
+		});
+	});
+};
+
+exports.test = checkInstall;
+
+
 writeConfig = function(config){
 	config = JSON.stringify(config);
 	fs.writeFile('config.json', config);
 }
 
-isValid = function (data, keys){
-	schem = cloneObject(dataSchem);
-	for (i in keys) 
-		if(schem.hasOwnProperty(keys[i]))
-			schem = schem[keys[i]];	
-
-
-	valid = true;
-
-	if(schem.regex != undefined){
-		regex = new RegExp(schem.regex);
-		valid = valid && regex.test(data);
-	}
-
-	if(schem.dataType != undefined){
-		switch(schem.dataType){
-			case "int":
-			if(!isNaN(parseInt(data))){
-				if (schem.max != undefined)
-					valid = valid && data <= schem.max;
-				if (schem.min != undefined)
-					valid = valid && data >= schem.min;
-			}else{
-				valid = false;
-			}
-			break;
-			case "string":
-			if(schem.max != undefined)
-				valid = valid && data.toString.length <= max;
-			if(schem.min != undefined)
-				valid = valid && data.toString.length >= min;
-			break;
-
-		}
-	}
-	return valid;
-}
-
-exports.isValid = isValid;
 
 cloneObject = function(object) {
 	var newObj = (object instanceof Array) ? [] : {};
