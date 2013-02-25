@@ -79,7 +79,7 @@ function setConfig(){
 			if(data.valid){
 				isConfigured.twitter = true;
 			}else{
-				console.log(data);
+				onValidationErrors(data.validationErrors, "Twitter");
 			}
 			updatePage();
 		});
@@ -95,7 +95,7 @@ function setConfig(){
 			if(data.valid){
 				isConfigured.redis = true;
 			}else{
-				console.log(data);
+				onValidationErrors(data.validationErrors, "Redis");
 			}
 			updatePage();
 		});
@@ -108,14 +108,28 @@ function setConfig(){
 			"confirmation" : document.getElementById('confirm').value
 		},
 		function(data){
+
 			if(data.valid){
 				isConfigured.account = true;
 			}else{
-				console.log(data);
+				onValidationErrors(data.validationErrors, "Account");
 			}
 			updatePage();
 		});
 	}
+}
+
+function onValidationErrors(errors, title){
+	var message = "";
+	for(e in errors){
+		message += errors[e]+" ";
+	}
+	var notif = new Notification({
+		"title" : title,
+		"message" : message,
+		"type" : "error"
+	});
+	notif.spawn();
 }
 
 function updatePage(){
