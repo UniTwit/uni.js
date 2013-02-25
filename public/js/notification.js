@@ -52,7 +52,6 @@ function Notification(config){
 	notif.innerHTML = html;
 	if(type)
 		notif.classList.add(type);
-	console.log(notif);
 
 	var despawn = function(){
 		notif.classList.add('despawn');
