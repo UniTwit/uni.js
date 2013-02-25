@@ -57,3 +57,36 @@ Just provide the right `host`, `port` and `pass`. The pass can be set in the Red
 
 ### Create the first account
 For this, you must go on the webinterface. Just put a username and a password.
+
+## Tasklist
+
+- [ ] Installer
+- [ ] WebApp
+- [ ] Server
+
+### General
+
+- [x] The logo.
+- [ ] Comment all the code.
+- [ ] Implement error manager.
+- [ ] Implement language manager.
+
+
+### Installer
+
+- [x] Do an installation.
+- [ ] Put all the code in seperate objects.
+
+### WebApp
+
+- [x] Have a precise idea.
+- [ ] The WebApp.
+- [ ] Put all the code in seperate objects.
+
+### Server
+
+- [x] Serv files
+- [x] Do an installation
+- [ ] Find a way to store users & co. in Redis.
+- [ ] The server.
+
