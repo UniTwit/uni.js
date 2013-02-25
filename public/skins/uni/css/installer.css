@@ -3,12 +3,11 @@
 *{
 	margin: 0;
 	padding: 0;
-	font-family: 'Source Sans Pro',Helvetica,Arial,sans-serif;
-	
 	outline: none; 
 }
 
 html{
+	font-family: 'Source Sans Pro',Helvetica,Arial,sans-serif;
 	font-size: 18px;
 	height: 100%;
 }
@@ -67,7 +66,7 @@ li{
 	display: inline-block;
 	width: 30px;
 	height: 30px;
-	vertical-align: -19%;
+	vertical-align: -10%;
 }
 
 #status .unconfigured{
