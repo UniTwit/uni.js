@@ -1,0 +1,129 @@
+/* notification.css */
+
+#notifications{
+	position: fixed;
+	width: 500px;
+	bottom: 5px;
+	right: 20px;
+}
+
+#notifications div{
+	background: black;
+	margin-top: 10px; 
+	height : 64px;
+	clear: both;
+	overflow: hidden;
+}
+
+#notifications div.error{
+	background: #4F1010;
+}
+#notifications div.warn{
+	background: #8B4A04;
+}
+#notifications div.vip{
+	background: #4F3050;
+}
+#notifications div.good{
+	background: #104F10;
+}
+
+#notifications div.actionnable:hover{
+	cursor: pointer;
+	background: #1F1F1F ;
+}
+
+#notifications div.error.actionnable:hover{
+	background: #871C1C;
+}
+#notifications div.warn.actionnable:hover{
+	background: #C66906;
+}
+#notifications div.vip.actionnable:hover{
+	background: #714573;
+}
+#notifications div.good.actionnable:hover{
+	background: #1C871C;
+}
+
+#notifications p{
+	font-size: 13px;
+	padding-left: 5px;
+	padding-right: 6px;
+	color: #DDD;
+	word-wrap: break-word;
+	-o-text-overflow: ellipsis;
+  	text-overflow: ellipsis;
+}
+
+#notifications header{
+	color: white;
+	font-size: 16px;
+	padding: 1px;
+	padding-left:5px;
+}
+
+#notifications span{
+	display: inline-block;
+	color: #888;
+	font-size: 12px;
+	text-align: right;
+	float: right;
+	margin: 2px;
+}
+
+#notifications i{
+	height: 12px;
+	width: 12px;
+	margin: 0px;
+	display: inline-block;
+	cursor: pointer;	
+}
+
+#notifications i:hover{
+	background-color: rgba(255,255,255,0.3);
+}
+
+#notifications time{
+	vertical-align: top;
+	margin-right: 5px;
+}
+
+#notifications i.close{
+	background-image: url('../img/iconmonstr-x-mark-icon.svg');
+}
+
+#notifications i.expand{
+	background-image: url('../img/iconmonstr-arrow-25-icon.svg');
+}
+
+#notifications img{
+	height : 64px;
+	width: 64px;
+	float: left;
+	margin: 0;
+	margin-right: 6px;
+}
+
+#notifications footer{
+	font-style: italic;
+	color: #888;
+	font-size: 12px;
+	text-align: right;
+	float: right;
+	padding-right: 8px;
+}
+
+#notifications div.close{
+	-webkit-transition: opacity 0.2s ease, height 0.4s ease-in-out, margin 0.4s ease-in-out;
+	height: 0px;
+	opacity: 0;
+	margin: 0;
+}
+
+#notifications div.despawn{
+	-webkit-transition: opacity 1s ease, height 1s ease-in-out, margin 0.4s ease-in-out;
+	height: 0px;
+	opacity: 0;
+	margin: 0;
+}
