@@ -4,6 +4,7 @@
   "dependencies": {
     "redis": "0.8.x",
     "node-twitter-api": "0.0.3-1",
-    "socket.io": "0.9.x"
+    "socket.io": "0.9.x",
+    "colors2" : "2.x"
   }
 }

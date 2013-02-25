@@ -1,11 +1,6 @@
 var	dataSchem  = require('./dataSchem');
 var fs = require('fs');
-
-red   = '\033[31m';
-blue  = '\033[34m';
-green  = '\033[32m';
-white = '\033[0m';
-orange = '\033[33m';
+var colors = require('colors2');
 
 var isReady = {
 	"twitter" : false,
@@ -14,6 +9,7 @@ var isReady = {
 	"app" : false
 };
 
+
 exports.isReady = function (){
 	return isReady;
 }
@@ -21,13 +17,13 @@ exports.isReady = function (){
 setReady = function(twitterOK, redisOK, accountIsPresent){
 
 	if(twitterOK != isReady.twitter && twitterOK == true)
-		console.log('TWITTER\t' + green + "OK" + white); 
+		console.log('TWITTER\t' + "OK".green); 
 	if(redisOK != isReady.redis && redisOK == true)
-		console.log('REDIS\t' + green + "OK" + white); 
+		console.log('REDIS\t' + "OK".green); 
 	if(accountIsPresent != isReady.accounts && accountIsPresent == true)
-		console.log('ACCOUNT\t' + green + "OK" + white);
+		console.log('ACCOUNT\t' + "OK".green);
 	if(redisOK && twitterOK && accountIsPresent != isReady.app && redisOK && twitterOK && accountIsPresent == true)
-		console.log('INSTALL\t' + green + "OK" + white);  
+		console.log('INSTALL\t' + "OK".green);  
 
 	isReady = {
 		"twitter" : twitterOK,

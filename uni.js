@@ -5,18 +5,10 @@ App entry point.
 
 */
 
-red   = '\033[31m';
-blue  = '\033[34m';
-green  = '\033[32m';
-white = '\033[0m';
-orange = '\033[33m';
-
-console.log(blue + "UNI\t" + white + "v0.1.6");
-console.log("");
-
 // modules / config / static data
 var fs = require('fs');
 var http = require('http');
+var colors = require('colors2');
 
 var twitter = require('./twitter.js');
 var redis = require('./redis.js');
@@ -26,29 +18,32 @@ var installer =  require('./installer.js');
 var config = require('./config');
 var mimetypes  = require('./mime-type');
 
+
+console.log("UNI\t".cyan + "v0.1.6\n");
+
 // determine if UNI is correctly installed
 installer.test(config, twitter, redis, accounts, init);
 
 function init(twitterOK, redisOK, accountIsPresent){
 
 	if(!twitterOK)
-		console.log('TWITTER\t' + orange + "missing" + white); 
+		console.log('TWITTER\t' + "missing".red); 
 	if(!redisOK)
-		console.log('REDIS\t' + orange + "missing" + white); 
+		console.log('REDIS\t' + "missing".red); 
 	if(!accountIsPresent)
-		console.log('ACCOUNT\t' + orange + "missing" + white);
+		console.log('ACCOUNT\t'  + "missing".red);
 
 
 	// start http/io server
 	http_server = http.createServer(onHTTPRequest);
 	var io = require('socket.io').listen(http_server);
 	http_server.listen(config.http_port);
-	console.log("HTTP\t"+ green + "OK\t" + blue + config.http_port + white);
+	console.log("HTTP\t"+ "OK\t".green + config.http_port.toString().cyan);
 	io.set('log level', 1);
 	io.sockets.on('connection', onSocketClient);
 
 	if(!(redisOK && twitterOK && accountIsPresent))
-		console.log('Great ! UNI is running :)\nBut it is not fully configured ! Go to the web interface ;D');  
+		console.log("\nGreat! uni is running :)\nBut it is not yet fully configured! Go to the web interface ;D\n".bold);  
 }
 
 
