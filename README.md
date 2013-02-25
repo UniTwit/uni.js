@@ -1,7 +1,7 @@
 uni
 ======
 
-A unified interface to manage multiple Twitter accounts in team.
+An unified interface to manage multiple Twitter accounts in team.
 
 Powered by node.js & Redis.
 
