@@ -6,7 +6,7 @@ An unified interface to manage multiple Twitter accounts in team.
 Powered by node.js & Redis.
 
 <p align="center">
-  <img src="https://raw.github.com/UniTwit/uni.js/master/public/img/uni.svg" alt="UNI logo"/>
+  <img src="https://raw.github.com/UniTwit/uni.js/master/public/img/uni_r.png" alt="UNI logo"/>
 </p>
 
 ## Setup
