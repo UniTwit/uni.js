@@ -100,21 +100,21 @@ setRedisConfig = function(data, callback){
 
 	if(data.port != undefined){
 		if(!isValid(data.port, ['port'])){
-			validationErrors["port"] = "port has an invalid format.";
+			validationErrors["port"] = "Port has an invalid format.";
 			valid = false;	
 		}
 	}else{
-		validationErrors["port"] = "port not provided";
+		validationErrors["port"] = "Port not provided.";
 		valid = false;
 	}
 
 	if(data.host == ""){
-		validationErrors["host"] = "host not provided";
+		validationErrors["host"] = "Host not provided.";
 		valid = false;
 	}
 
 	if(data.pass == ""){
-		validationErrors["pass"] = "pass not provided";
+		validationErrors["pass"] = "Securecode not provided.";
 		valid = false;
 	}
 
@@ -157,26 +157,26 @@ createFirstAccount = function(data, callback){
 
 	if(data.username != undefined){
 		if(!isValid(data.username, ['username'])){
-			validationErrors["username"] = "username has an invalid format.";
+			validationErrors["username"] = "Username has an invalid format.";
 			valid = false;	
 		}
 	}else{
-		validationErrors["username"] = "username not provided";
+		validationErrors["username"] = "Username not provided.";
 		valid = false;
 	}
 
 	if(data.password == ""){
-		validationErrors["password"] = "password not provided";
+		validationErrors["password"] = "Password not provided.";
 		valid = false;		
 	}
 
 	if(data.confirmation == ""){
-		validationErrors["confirmation"] = "confirmation not provided";
+		validationErrors["confirmation"] = "Confirmation not provided.";
 		valid = false;		
 	}
 
 	if(data.password != data.confirmation){
-		validationErrors['passwords'] = "passwords don't match";
+		validationErrors['passwords'] = "Passwords don't match.";
 		valid = false;
 	}
 
@@ -186,7 +186,7 @@ createFirstAccount = function(data, callback){
 	}else{
 		accounts.test(config.redis, function(thereIsAnAccount){
 			if(thereIsAnAccount){
-				validationErrors['account'] = "account already created";
+				validationErrors['account'] = "Account already created.";
 				valid = false;
 			}	
 			setReady(isReady.twitter, isReady.redis, thereIsAnAccount);
@@ -224,12 +224,12 @@ setTwitterConfig = function (data, callback){
 			valid = false;	
 		}
 	}else{
-		validationErrors["secret"] = "consumer_secret not provided";
+		validationErrors["secret"] = "consumer_secret not provided.";
 		valid = false;
 	}
 
 	if(data.callback_url == ""){
-		validationErrors["callback_url"] = "callback_url not provided";
+		validationErrors["callback_url"] = "callback_url not provided.";
 		valid = false;		
 	}
 
@@ -320,13 +320,3 @@ writeConfig = function(config){
 	config = JSON.stringify(config);
 	fs.writeFile('config.json', config);
 }
-
-
-cloneObject = function(object) {
-	var newObj = (object instanceof Array) ? [] : {};
-	for (i in object) {
-		if (object[i] && typeof object[i] == "object") {
-			newObj[i] = cloneObject(object[i]);
-		} else newObj[i] = object[i]
-	} return newObj;
-};

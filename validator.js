@@ -2,6 +2,7 @@
 
 var	dataSchem  = require('./dataSchem');
 
+// link with wobsocket
 exports.getActions = function(addAction){
 	addAction("dataValidation", onDataValidationRequest);
 }
@@ -13,13 +14,15 @@ onDataValidationRequest = function(request, callback){
 }
 
 isValid = function (data, keys){
-	schem = cloneObject(dataSchem);
-	for (i in keys){ 
-		if(schem.hasOwnProperty(keys[i])){
-			schem = schem[keys[i]];	
+	var schem = cloneObject(dataSchem);
+	var i = 0;
+
+	if(keys.length < 5){
+
+		while(schem.hasOwnProperty(keys[i])){
+			schem = schem[keys[i]];
+			i++;
 		}
-
-
 		valid = true;
 
 		if(schem.regex != undefined){
@@ -49,7 +52,19 @@ isValid = function (data, keys){
 			}
 		}
 		return valid;
+	}else{
+		return false;
 	}
 }
 
 exports.isValid = isValid;
+
+
+cloneObject = function(object) {
+	var newObj = (object instanceof Array) ? [] : {};
+	for (i in object) {
+		if (object[i] && typeof object[i] == "object") {
+			newObj[i] = cloneObject(object[i]);
+		} else newObj[i] = object[i]
+	} return newObj;
+};
