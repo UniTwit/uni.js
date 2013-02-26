@@ -130,6 +130,7 @@ article{
 }
 
 article.visible{
+	height: auto;
 	left: 0;
 	opacity: 1;
 }
