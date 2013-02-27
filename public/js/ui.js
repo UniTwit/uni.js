@@ -1,13 +1,19 @@
 // ui.js
 
 // Component class
-var Component = Class.extend({
-	init: function(tag) {
+var Component = Base.extend({
+	constructor: function(tag) {
 		this.DOMElement = document.createElement(tag);
+		// To retrieve the component object in event handlers
+		this.DOMElement.component = this;
 	},
 
 	spawn: function(parent){
 		parent.appendChild(this.DOMElement);
+	},
+
+	despawn: function(){
+		this.DOMElement.parentElement.removeChild(this.DOMElement);
 	},
 
 	disable: function(){
@@ -26,18 +32,19 @@ var Component = Class.extend({
 
 // Draggable extends Component
 var Draggable = Component.extend({
-	init:function(tag){this._super(tag)},
+	constructor:function(tag){this.base(tag)},
 
 	// Inherited methods
-	spawn:function(parent){this._super(parent)},
-	disable:function(){this._super()},
-	enable:function(){this._super()}
+	spawn:function(parent){this.base(parent)},
+	despawn: function(){this.base();},
+	disable:function(){this.base()},
+	enable:function(){this.base()}
 });
 
 // Button class extends Component
 var Button = Component.extend({
-	init: function (caption, action) {
-		this._super('button');
+	constructor: function (caption, action) {
+		this.base('button');
 		this.action = action;
 		this.caption = caption;
 		this.DOMElement.textContent = this.caption;
@@ -53,16 +60,17 @@ var Button = Component.extend({
 	},
 
 	// inherited methods
-	spawn: function(parent){this._super(parent)},
-	disable: function(){this._super();},
-	enable: function(){this._super();}
+	spawn: function(parent){this.base(parent)},
+	despawn: function(){this.base();},
+	disable: function(){this.base();},
+	enable: function(){this.base();}
 });
 
 // Form extends Component
 var Form = Component.extend({
 	// action: a function, type: submit|instant, caption: caption of the submit|quit button
-	init: function(action, type, caption){
-		this._super('form');
+	constructor: function(action, type, caption){
+		this.base('form');
 
 		this.action = action;
 		this.type = type;
@@ -72,36 +80,57 @@ var Form = Component.extend({
 		console.log(this);
 	},
 
-	addInput: function(name, type, dataType){
+	addInput: function(name, type, dataType, label){
 		console.log(this);
 		if(this.type == "instant")
-			input = new Input(name, type, dataType, this.onChange);
+			input = new Input(name, type, dataType, label, this.onChange);
 		else
-			input = new Input(name, type, dataType);
+			input = new Input(name, type, dataType, label);
 		console.log(this);
 		this.inputs.push(input);
 	},
 
-	onSubmit: function(){
+	onSubmit: function(e){
+		e.preventDefault();
 		data = {};
 
-		this.inputs.forEach(function(input){
-			data[input.getName()] = input.getValue();
-		});
+		component = this.parentElement.component;
 
-		this.action(data);
+		for(i in component.inputs){
+			data[component.inputs[i].getName()] = component.inputs[i].getValue();
+		}
+
+		component.action(data);
+	},
+
+	onChange: function(e){
+		e.preventDefault();
+		data = {};
+		component = this.parentElement.component;
+		data[this.component.getName()] = this.component.getValue();
+
+		component.action(data);
 	},
 
 	// Inherited methods
 	spawn: function(parent){
-		this._super(parent);
+		this.base(parent);
+		for(i in this.inputs){
+			this.inputs[i].spawn(this.DOMElement);
+		}
 		this.submit.spawn(this.DOMElement);
-		this.inputs.forEach(function(input){
-			input.spawn(this.DOMElement);
-		});
 	},
+
+	despawn: function(parent){
+		for(i in this.inputs){
+			this.inputs[i].despawn();
+		}
+		this.submit.despawn();
+		this.base();
+	},
+
 	disable:function(){
-		this._super();
+		this.base();
 		this.submit.disable();
 		this.inputs.forEach(function(input){
 			input.disable();
@@ -109,7 +138,7 @@ var Form = Component.extend({
 	},
 
 	enable:function(){
-		this._super();
+		this.base();
 		this.submit.enable();
 		this.inputs.forEach(function(input){
 			input.enable();
@@ -119,8 +148,8 @@ var Form = Component.extend({
 
 // Input extend Component
 var Input = Component.extend({
-	init: function(name, type, dataType, action){
-		this._super('input');
+	constructor: function(name, type, dataType, label, action){
+		this.base('input');
 
 		this.DOMElement.setAttribute('name', name);
 		this.DOMElement.setAttribute('type', type);
@@ -129,6 +158,12 @@ var Input = Component.extend({
 		this.action = action;
 		this.name = name;
 		this.type = type;
+
+		if(label){
+			randomId = Math.random().toString(36).substring(7);
+			this.DOMElement.id = randomId;
+			this.label = new Label(label, randomId);
+		}
 
 		this.addEvents();
 	},
@@ -178,7 +213,34 @@ var Input = Component.extend({
 	},
 
 	// Inherited methods
-	spawn:function(parent){this._super(parent)},
-	disable:function(){this._super();},
-	enable:function(){this._super();}
+	spawn:function(parent){
+		if(this.label)
+			this.label.spawn(parent);
+		this.base(parent)
+	},
+	despawn: function(){
+		this.label.despawn();
+		this.base();
+	},
+	disable:function(){
+		this.label.disable();
+		this.base();
+	},
+	enable:function(){
+		this.label.enable();
+		this.base();
+	}
+});
+
+// Label extends Component
+var Label  = Component.extend({
+	constructor: function(caption, target){
+		this.base('label');
+		this.DOMElement.setAttribute('for', target);
+		this.DOMElement.textContent = caption;
+	},
+	spawn:function(parent){this.base(parent)},
+	despawn: function(){this.base();},
+	disable:function(){this.base();},
+	enable:function(){this.base();}
 });
